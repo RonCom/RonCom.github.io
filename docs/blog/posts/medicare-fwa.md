@@ -22,6 +22,7 @@ This post explains the choices behind it: what I built, why, what did not work, 
     - **Method:** compare each provider to peers in the same specialty and year using robust statistics, adjust for low volume, combine transparent rules with an Isolation Forest, and give every flag plain-language reasons.
     - **Result:** the score ranks providers later excluded by OIG well above chance: **AUC 0.71 (95% CI 0.64–0.76)**. The top 5% of the list holds **3.4×** the random share of later-excluded providers; the top 20% holds 53% of them.
     - **What didn't beat it:** supervised XGBoost, case-mix adjusted peers, and two other outlier detectors — including one that failed a test I wrote down before seeing the data.
+    - **From a list to an audit plan:** an integer program that chooses whom to audit under a fixed hour budget covered **50% vs 32%** of later-excluded providers' Medicare dollars on held-out years, with 25% fewer audits. A policy that learns from its own audits (a contextual bandit, tested on simulated audit findings) helps most when fraud patterns shift.
     - **Stack:** Python, dbt (running on both DuckDB and Snowflake, reconciled row for row), Streamlit, uv. Code: [github.com/RonCom/medicare-fwa](https://github.com/RonCom/medicare-fwa).
 
 !!! warning "Outliers are not fraud"
@@ -153,6 +154,49 @@ Most of the headline number came from the same provider appearing in both traini
 
 I also audited a popular Kaggle "healthcare fraud" dataset as a possible second benchmark. It turned out to be synthetic: one ratio column alone separates the fraud label (AUC 0.99), clinical fields carry no signal, and its provider IDs are not NPIs, so it cannot be linked to real providers. I did not use it.
 
+## From a ranked list to an audit plan
+
+A ranking answers "who looks most unusual?" An investigations unit has a different question: **"with this many staff hours, whom do we audit?"** Walking straight down the ranking ignores three things. Some specialties are excluded about 20 times as often as others, but a within-specialty percentile can't see that. Some providers put far more dollars at stake. And a large practice takes longer to review than a small one.
+
+So I turned the ranking into an audit plan:
+
+1. **Calibrate.** Convert each provider's within-specialty percentile into a probability of later exclusion, using logistic regression with one intercept per specialty, fitted on 2016–2019 only. On the held-out years it predicts 55 exclusions; 62 happened.
+2. **Value and cost.** Expected value = probability × standardized Medicare payment. Audit hours grow with the size of the patient panel. These hours are planning assumptions, stated in the config.
+3. **Optimize.** An integer program (SciPy / HiGHS) maximizes expected value subject to the hour budget, a coverage floor for each specialty, and no back-to-back audits of the same provider.
+
+The test gives the plan the same hours the top-5% review list would need, on held-out years 2020–2023:
+
+| Plan (same 333,000 audit hours) | Audits | Later-excluded caught | Their dollars covered |
+|---|---|---|---|
+| Audit down the ranking | 14,312 | 11 (18%) | 32% [10–47%] |
+| **Optimized plan** | **10,690** | **18 (29%)** | **50% [34–61%]** |
+
+The dollar gain is +18 points, with an interval (+5 to +39) that clears zero. The count gain (+11 points, −2 to +25) is suggestive at this sample size. At smaller budgets the gap is wider: at the top-1% budget the plan reaches 34% of the dollars, against 1% for the ranking.
+
+![Audit budget frontier: share of later-excluded providers and their dollars reached at each budget](../../assets/medicare-fwa/audit_budget_frontier.png)
+
+### A policy that learns from its own audits
+
+The plan above is fitted once. A real unit would learn from each quarter's audits and re-plan. Only audited providers reveal a result, which makes this a **contextual bandit** problem (one-step reinforcement learning): the policy balances auditing providers it is confident about against learning about the rest.
+
+**Why the audit findings had to be simulated.** Exclusions are far too sparse to learn from. The held-out years contain 62 later-excluded provider-years among 285,039, and a quarter's audit list holds fewer than one of them on average. No policy can update on one data point a quarter; any difference would be noise. Real audits find much more than exclusion-grade fraud (overpayments, unsupported units, upcoding), but those results are not public. So I simulated each audit's finding from the same billing outliers the score measures, through weights the policy never sees. Later-excluded providers are near-certain findings. That gives about 555 findings a quarter to learn from. From 2022, a new pattern appears: billing for passive or unattended treatments starts to predict findings.
+
+Five random seeds, 16 quarters:
+
+| Policy | Expected recovery | vs ranking |
+|---|---|---|
+| Audit down the ranking | $118.5M | – |
+| Model fitted once on 2016–2019 audits | $142.6M | +20% |
+| Thompson sampling, updated each quarter | $143.1M | +21% |
+| **Thompson sampling, old evidence fades** | **$144.2M** | **+22%** |
+| Oracle (knows the truth) | $146.7M | +24% |
+
+Two lessons came out of this. First, most of the gain comes from **modeling what audits find**, not from learning over time. Second, learning pays off when patterns change, and **only if old evidence fades**. The plain learner barely moved, because four years of history outweighed a few quarters of new audits. I added the fading version after seeing that, and I report it that way. When the new pattern was made stronger, the fading version's gain over the frozen model grew from 2% to 5–8%.
+
+![Cumulative recovery and recovery per quarter as a share of the oracle](../../assets/medicare-fwa/audit_bandit.png)
+
+These results use real providers with a simulated outcome, not real recoveries. They show how the methods compare, not what an audit program would recover.
+
 ## Engineering: built like it would be run
 
 - **dbt models run on DuckDB locally and on Snowflake.** The same SQL builds staging tables and a provider-year feature mart in both, with tests for keys and one row per provider-year. A reconciliation step compares every column: all 594,765 provider-years match.
@@ -170,7 +214,7 @@ I also audited a popular Kaggle "healthcare fraud" dataset as a possible second 
 
 ## What I'd do with a health plan's data
 
-Claim lines would allow modifier and edit-bypass checks, episode-level patterns and referral networks. Audit and recovery outcomes would give a much richer label than exclusions, and at that point a supervised layer on top of these peer features becomes worth building. The core ideas would carry over unchanged: compare to real peers, adjust for volume, keep reasons readable, and evaluate the way the list will actually be used.
+Claim lines would allow modifier and edit-bypass checks, episode-level patterns and referral networks. Audit and recovery outcomes would give a much richer label than exclusions (they would replace the simulated findings above), and at that point a supervised layer on top of these peer features becomes worth building. The core ideas would carry over unchanged: compare to real peers, adjust for volume, keep reasons readable, and evaluate the way the list will actually be used.
 
 The code, results, and full experiment log are at [github.com/RonCom/medicare-fwa](https://github.com/RonCom/medicare-fwa).
 

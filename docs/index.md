@@ -7,13 +7,19 @@ This site holds project write-ups and tutorials, written so the choices behind t
 
 ## Latest
 
+**[Prescriptive care management: who to contact, with what, and how to keep learning](blog/posts/care-outreach.md)**
+Deep learning, uplift modeling, integer programming, contextual bandits and drift-triggered retraining on synthetic
+health-plan members, checked against a known truth. Where optimization paid off, where it didn't, and why.
+
 **[Finding outlier Medicare providers with public data](blog/posts/medicare-fwa.md)**
-Peer-benchmarked outlier detection on 595,000 public CMS provider-years, validated against later OIG exclusions.
-Why each design choice was made, what failed, and how a published 0.93 AUC fell to 0.62 under a strict test.
+Peer-benchmarked outlier detection on 595,000 public CMS provider-years, validated against later OIG exclusions,
+then turned into a budgeted audit plan. Why each design choice was made, what failed, and how a published 0.93 AUC fell
+to 0.62 under a strict test.
 
 ## Projects
 
 | Project | What it is | Links |
 |---|---|---|
-| Medicare payment integrity outlier screening | Provider outlier scoring on CMS data; dbt on DuckDB and Snowflake; Streamlit dashboard | [Write-up](blog/posts/medicare-fwa.md) · [Code](https://github.com/RonCom/medicare-fwa) |
+| Medicare payment integrity outlier screening | Provider outlier scoring on CMS data; dbt on DuckDB and Snowflake; audit planning (integer program, contextual bandit); Streamlit dashboard | [Write-up](blog/posts/medicare-fwa.md) · [Code](https://github.com/RonCom/medicare-fwa) |
+| Prescriptive care management | Deep learning risk, uplift, integer programming, contextual bandits, MLflow + Evidently retraining, provider steering | [Write-up](blog/posts/care-outreach.md) · [Code](https://github.com/RonCom/care-outreach) |
 | Data modeling, end to end | Tutorial: operational models to analytics, DuckDB → Postgres → Snowflake | In progress |
