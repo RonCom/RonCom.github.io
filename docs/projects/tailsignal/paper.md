@@ -446,7 +446,7 @@ Six of nine clinics have 90% rank intervals spanning four or more positions.
 
 ### 5.6 Oral health
 
-About 9.4% of dogs seen per year were diagnosed with dental disease (95% CI 9.1–9.8%); toy breeds had 2.5 times the
+On the platform layer, 9.4% of dogs seen per year were diagnosed with dental disease (95% CI 9.1–9.8%); toy breeds had 2.5 times the
 odds after adjusting for age (OR 2.49, 2.17–2.85); prevalence rose from 3.8% under age 2 to 15.4% at 12 and over; 46% of
 diagnosed dogs had a cleaning the same year. Comparison with Banfield and VetCompass exposed four simulator gaps
 (small-breed risk, overweight link, detection at wellness exams, clinic charting differences). Re-run on the EHR
