@@ -331,6 +331,25 @@ breed-level shrinkage, not recall of common reactions.
 H3 verdict: lower false-signal rate supported; breed-specific detection supported; earlier isoxazoline detection not
 supported; both method claims replicate on new data.
 
+**Exposure denominators.** Pre-registered after the results above. Fluralaner is the only isoxazoline with published
+dose counts: about 41.6M doses worldwide from February 2014 to December 2016, 18M of them in the EU (EMA, 2017). The US
+got at most the other 23.6M, so US reports divided by 23.6M give a lower bound on the US reporting rate.
+
+**Table 6a.** US dog reports naming fluralaner, 2014–2016 (11,939 reports; 713 neurologic; 376 convulsion), per 10,000
+doses.
+
+| US doses assumed | Any report | Neurologic | Convulsion |
+|---|---|---|---|
+| 23.6M (lower bound on rates) | 5.06 | 0.30 | 0.16 |
+| 11.8M (50% of non-EU doses) | 10.12 | 0.60 | 0.32 |
+
+Both predictions passed: the convulsion lower bound is below the EMA label's 1 in 10,000, and the any-report lower bound
+is 4.2× the EU electronic reporting rate (1.19 per 10,000). Per dog-year (about four 12-week doses), the convulsion rate
+is 0.64 per 10,000 at the lower bound and 1.27 if the US took half the non-EU doses, so agreement with the EU label
+depends on a US sales figure that isn't public. Afoxolaner's neurologic reporting rate equals fluralaner's only if it
+sold 44.7M US doses in 2014–2016; neurologic signs appear in 11.7% of its reports against 6.0% for fluralaner, which is
+all a proportional method can see.
+
 ### 5.3 Drug-safety cohorts in clinic records
 
 At the actual network size the isoxazoline cohort has 986 exposed and 616 comparator dogs with 2 and 0 seizures; the
@@ -430,8 +449,12 @@ Six of nine clinics have 90% rank intervals spanning four or more positions.
 About 9.4% of dogs seen per year were diagnosed with dental disease (95% CI 9.1–9.8%); toy breeds had 2.5 times the
 odds after adjusting for age (OR 2.49, 2.17–2.85); prevalence rose from 3.8% under age 2 to 15.4% at 12 and over; 46% of
 diagnosed dogs had a cleaning the same year. Comparison with Banfield and VetCompass exposed four simulator gaps
-(small-breed risk, overweight link, detection at wellness exams, clinic charting differences), which the EHR layer
-addresses (Section 3.1).
+(small-breed risk, overweight link, detection at wellness exams, clinic charting differences). Re-run on the EHR
+layer's dental records (25,331 dog-years), the overweight gap closes (adjusted OR 1.60 vs. published 1.65–2.23) and the
+charting funnel flags both planted under-charting clinics (rank correlation 0.69). Small breeds now sit above large
+(20.6% vs. 15.2%) but below toy (32.1%), and exams raise recording of existing disease (76% vs. 61%) while raw
+prevalence stays lower in exam years (17.7% vs. 20.2%), so those two gaps are partly closed. Dog prevalence rises to
+18.1%, between Banfield's 5-year 18.2% and VetCompass's annual 12.5%.
 
 ![Dental disease by breed size and age](../../assets/tailsignal/oral_health.png)
 
@@ -532,7 +555,7 @@ trial to run; the segmentation failure produced a better design.
 
 - Partner records are simulated; real records are messier and effects smaller and noisier.
 - Spontaneous reports have no exposure denominator, and reporting is stimulated by publicity; Model A produces
-  proportional ratios, not rates.
+  proportional ratios, not rates. Public dose counts exist for fluralaner only, worldwide, at two dates.
 - NARMS isolates come from diagnostic submissions, which over-represent recurrent infections; laboratory participation
   varies by state and year.
 - PetEVAL labels were judged by one reader with moderate self-agreement; recall was measured only within one ICD
@@ -567,6 +590,7 @@ scripts; PetEVAL requires accepting its terms. 28 dbt tests and 26 unit tests ru
 - DuMouchel W. (1999). Bayesian data mining in large frequency tables, with an application to the FDA spontaneous reporting system. *The American Statistician* 53:177–190.
 - Farrell S. et al. (2025). [PetEVAL: A veterinary free text electronic health records benchmark](https://aclanthology.org/2025.bionlp-1.29/). BioNLP 2025.
 - FDA Center for Veterinary Medicine. [Animal and veterinary adverse event reports, openFDA](https://open.fda.gov/apis/animalandveterinary/event/).
+- European Medicines Agency (2017). [Tick and flea control agent Bravecto continues to be acceptably safe to use](https://www.ema.europa.eu/en/news/tick-flea-control-agent-bravecto-continues-be-acceptably-safe-use).
 - FDA. NARMS animal pathogen antimicrobial resistance data (Vet-LIRN, NAHLN).
 - Hall J. A. et al. (2014). Comparison of serum concentrations of symmetric dimethylarginine and creatinine as kidney function biomarkers in cats with chronic kidney disease. *Journal of Veterinary Internal Medicine* 28:1676–1683.
 - Peterson M. E. et al. (2018). [Evaluation of serum symmetric dimethylarginine concentration as a marker for masked chronic kidney disease in cats with hyperthyroidism](https://pmc.ncbi.nlm.nih.gov/articles/PMC5787157). *Journal of Veterinary Internal Medicine* 32.

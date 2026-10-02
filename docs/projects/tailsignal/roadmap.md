@@ -50,7 +50,7 @@ the cost per personal reminder.
 
 | Item | Why | Status |
 |---|---|---|
-| **Exposure denominators for Model A** | Spontaneous reports give proportional ratios, not rates. Model A2 already computes true rates using clinic prescriptions as the denominator, but only on simulated records. Public dose or sales data for companion-animal products is not available, so the next step is a reporting rate per 10,000 prescriptions from partner clinics, linking FDA report counts to real dispensing volume | **Not yet done** |
+| **Exposure denominators for Model A** | Spontaneous reports give proportional ratios, not rates. Fluralaner is the only isoxazoline with public dose counts: US reports per 10,000 doses, 2014–2016, are at least 5.06 for any event, 0.30 neurologic and 0.16 convulsion. The other isoxazolines need manufacturer sales or partner-clinic prescriptions; afoxolaner's neurologic rate equals fluralaner's only at 44.7M US doses ([results](https://github.com/RonCom/tailsignal/blob/main/docs/model_a_exposure_results.md)) | **Done for fluralaner**; open for other products |
 | Clinical second reader for clinic-note labels | Self-agreement κ 0.48 on 24 notes; a vet or vet nurse would make it a measured two-reader result | Planned |
 | Model B: breed-condition risk with partial pooling (H4) | Needs Dog Aging Project data | Awaiting access |
 | Kidney model on real lab histories | Simulated accuracy is optimistic | Needs a lab or clinic partner |
