@@ -20,6 +20,12 @@ owns its clinics outright.
 
 <!-- more -->
 
+!!! tip "Full write-up"
+    This post is the short version. The [full TailSignal write-up](../../projects/tailsignal/index.md) has pages for
+    executives, sales, engineering and research, a [research paper](../../projects/tailsignal/paper.md), the
+    [business case with an interactive explorer](../../projects/tailsignal/business-case.md) and a
+    [customer portal demo](../../projects/tailsignal/portal.md).
+
 !!! abstract "TL;DR"
     - **Data:** simulated partner records (6 systems, 4 file formats) plus real public data: 1.36M FDA adverse-event reports, 26,396 FDA NARMS bacterial isolates and 4,999 UK clinic notes (SAVSNET PetEVAL).
     - **Linking:** matching households first, then pets within each household, reached F1 0.983 against 0.904 for the usual phone-plus-pet-name rule.

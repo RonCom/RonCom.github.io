@@ -8,7 +8,7 @@ risk-adjusted clinic scorecards, antibiotic-resistance trends from 26,396 real F
 early-warning model (AUC 0.965 with SDMA, stress-tested and checked with a decision curve), a metered data API and a
 business case. Every analysis had a pre-registered test; the failures are reported.
 
-[Write-up](blog/posts/tailsignal.md) · [Code on GitHub](https://github.com/RonCom/tailsignal)
+[Executive summary](projects/tailsignal/index.md) · [Research paper](projects/tailsignal/paper.md) · [Customer portal demo](projects/tailsignal/portal.md) · [Business case](projects/tailsignal/business-case.md) · [Blog post](blog/posts/tailsignal.md) · [Code on GitHub](https://github.com/RonCom/tailsignal)
 
 ## Medicare payment integrity outlier screening
 

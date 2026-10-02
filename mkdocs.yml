@@ -44,7 +44,11 @@ markdown_extensions:
   - toc:
       permalink: true
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
 
 extra:
   social:
@@ -55,7 +59,16 @@ extra:
 
 nav:
   - Home: index.md
-  - Projects: projects.md
+  - Projects:
+      - projects.md
+      - TailSignal:
+          - projects/tailsignal/index.md
+          - Products and go-to-market: projects/tailsignal/commercial.md
+          - Customer portal and API: projects/tailsignal/portal.md
+          - Business case: projects/tailsignal/business-case.md
+          - Platform and engineering: projects/tailsignal/platform.md
+          - Research paper: projects/tailsignal/paper.md
+          - Roadmap and next 90 days: projects/tailsignal/roadmap.md
   - Blog:
       - blog/index.md
   - About: about.md
