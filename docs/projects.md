@@ -1,5 +1,15 @@
 # Projects
 
+## TailSignal: pet health data platform
+
+Links simulated vet, daycare, grooming and wellness-plan records (F1 0.983 vs 0.904 for the usual rule) and turns them
+into products: breed-aware drug-safety signals on 970,167 real FDA dog reports (0 false alarms per 1,000 vs 43),
+risk-adjusted clinic scorecards, antibiotic-resistance trends from 26,396 real FDA isolates, a feline kidney
+early-warning model (AUC 0.965 with SDMA, stress-tested and checked with a decision curve), a metered data API and a
+business case. Every analysis had a pre-registered test; the failures are reported.
+
+[Write-up](blog/posts/tailsignal.md) · [Code on GitHub](https://github.com/RonCom/tailsignal)
+
 ## Medicare payment integrity outlier screening
 
 Flags Medicare providers whose billing is unusual against same-specialty peers, and tests whether those flags come before
