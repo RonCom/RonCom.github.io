@@ -29,7 +29,7 @@ the ones that failed.
 
 A dog is seen at the vet for illness, at daycare for behavior and attendance, by a groomer for skin, ears and lumps,
 and by a wellness plan for loyalty. Each business holds one slice, none shares an ID, and no buyer can see the whole
-pet. The scarce asset is the linked record. Buyers for it include animal-health manufacturers, pet food and dental
+pet. Buyers for the linked record include animal-health manufacturers, pet food and dental
 makers, insurers, diagnostics companies, public-health agencies and the clinic groups that produce the data.
 
 Corporate groups own about 30% of the roughly 34,000 US veterinary practices and over half of companion-animal revenue
@@ -39,7 +39,7 @@ US pet industry spending reached $158 billion in 2025 across 95 million pet-owni
 
 ## What was built
 
-| Stage | What exists | Key number |
+| Stage | What exists | Scale |
 |---|---|---|
 | Collect | 6 simulated partner systems in CSV, JSON-lines and pipe-delimited files; ingest for FDA, Census, city and clinical-text data | 26,099 pet records; 1.36M real FDA reports |
 | Organize | dbt models, breed and diagnosis taxonomies, two-stage record linkage, k-anonymous products | 12,666 pets; match F1 0.983 vs 0.904 |
@@ -54,7 +54,7 @@ US pet industry spending reached $158 billion in 2025 across 95 million pet-owni
 | Methicillin-resistant staph in dog skin infections rose from 31% to 43%, 2017–2024 | 26,396 real FDA NARMS isolates | Regional "which antibiotic still works" tables for clinics; a trend feed for public health |
 | Clinic complication scorecards rank correctly at today's volume (rank correlation 0.97) | Simulated clinic records | A product for clinic groups and acquirers now; death-rate scorecards need ~5,000 procedures per clinic |
 | Feline kidney early warning: AUC 0.965 with two lab visits and SDMA; holds at 0.96 under real-world confounders | Simulated lab panels, calibrated to IRIS and published studies | A risk flag on each senior cat's lab report; costs ~1.2–1.5 rechecks per cat later diagnosed |
-| Seizure text-mining fell from 75% to 30% precision on real UK clinic notes, but found every clear seizure (15 of 15) | 4,999 real clinic notes (PetEVAL) | Outcome dictionaries need clinical review; a sellable annotation service, not an automatic one |
+| Seizure text-mining fell from 75% to 30% precision on real UK clinic notes, but found every clear seizure (15 of 15) | 4,999 real clinic notes (PetEVAL) | Outcome dictionaries need clinical review; sellable as an annotation service |
 | Drug-safety studies in clinic records recover the planted risk only at 10× the network; rare events need ~130× | Simulated clinic records | Rare-event studies need a consortium; common-event studies need ~80× |
 
 ## What it is worth
@@ -79,7 +79,7 @@ captures operating savings directly. Details and the assumptions behind each lin
 - **Per-clinic death rates.** At current volume they are noise; a noisy league table damages trust with vets.
 - **Targeted reminders.** Reminders help on average, but the pilot was too small to learn who benefits. A randomized
   trial of 6,000 households is designed to answer it.
-- **Rare side-effect studies.** They need about 130× today's clinic volume: a consortium, not one company.
+- **Rare side-effect studies.** They need about 130× today's clinic volume, which takes a consortium.
 
 ## Decisions for leadership
 

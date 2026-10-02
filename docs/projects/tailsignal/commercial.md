@@ -5,9 +5,9 @@ description: TailSignal's products, buyers, pricing assumptions, scale gates and
 # Products and go-to-market
 
 TailSignal sells four kinds of things from the same linked data: the data itself, packaged insight, scores from
-models, and analytics inside tools partners already use. The order matters: embedded analytics earn data access,
+models, and analytics inside tools partners already use. In order: embedded analytics earn data access,
 research reports bring the earliest outside revenue, and data licenses and studies unlock only at stated network
-sizes. Prices below are **planning assumptions** for the business case, to be replaced with buyer quotes.
+sizes. Prices are **planning assumptions** for the business case, to be replaced with buyer quotes.
 
 ## The four revenue models
 
@@ -43,7 +43,7 @@ sizes. Prices below are **planning assumptions** for the business case, to be re
 ## Go-to-market sequence
 
 1. **Give clinics something back first.** Free complication, dental and stewardship scorecards plus the regional
-   antibiogram in the partner portal. This is what persuades a clinic group to share data; the premium tier adds group
+   antibiogram in the partner portal, given to clinic groups in exchange for their data; the premium tier adds group
    benchmarking at $1,800 per clinic per year.
 2. **Sell insight while the network is small.** Research reports (oral health, resistance trends, drug-safety
    landscape) need little network volume because they lean on public data or aggregate cuts. Planning volume: 2 reports
@@ -53,13 +53,13 @@ sizes. Prices below are **planning assumptions** for the business case, to be re
 4. **Scoring API once models are validated.** Drug-signal and demand-forecast scoring: 1 client in Year 2, 7 in
    Year 5. Each needs a model card, calibration report, drift monitoring and a stated scope of valid use.
 5. **Validation studies last.** $250,000 each, unlocking at about 720 clinics (common side effects) and 1,170 (rare).
-   These are upside, not the base of the plan.
+   In the partner-network Base case they are 29% of Year-5 revenue.
 
 ## Sales motions by buyer
 
 | Buyer | Opening offer | Proof point to bring | Expansion |
 |---|---|---|---|
-| Clinic groups | Free quality and stewardship scorecards | Funnel plots that separate real differences from chance; rank ranges, not league tables | Premium benchmarking; staffing forecasts; kidney flag |
+| Clinic groups | Free quality and stewardship scorecards | Funnel plots that separate real differences from chance; rank ranges for each clinic | Premium benchmarking; staffing forecasts; kidney flag |
 | PE diligence teams | Target-vs-network benchmark from 2–4 years of records | Complication and charting gaps measurable at single-clinic volume | Portfolio-wide quality monitoring |
 | Animal-health manufacturers | Breed-level drug-safety landscape for their products | 0 false alarms vs 43 per 1,000; MDR1 breed control found | Time-to-onset analyses; validation studies at scale |
 | Pet food and dental makers | Oral health report | Toy-breed risk, treatment gap | Pet Health Index license |
@@ -78,7 +78,7 @@ sizes. Prices below are **planning assumptions** for the business case, to be re
 | Scoring/API contract | $80,000 a year per client | Drug-signal and forecast scoring |
 | Signal-validation study | $250,000 per study | EHR cohort study for a manufacturer or regulator |
 
-The partner-network business case shows what these prices imply: at 1,500 clinics in Year 5, revenue is $4.25M and
+In the partner-network business case, at 1,500 clinics in Year 5, revenue is $4.25M and
 each clinic brings about $2,800 of revenue against a $1,000 incentive. See [Business case](business-case.md).
 
 ## How the API enforces the commercial model
@@ -98,7 +98,7 @@ A clinic key cannot read another clinic's scorecard; unknown keys are rejected. 
 
 ## Results dashboard
 
-The dashboard below is what a partner or buyer would see: clinic scorecards (with a switch to the 10× network),
+A partner or buyer sees clinic scorecards (with a switch to the 10× network),
 antibiotic-resistance trends and the regional antibiogram, kidney early warning, and the products-by-scale table.
 [Open it full screen](interactive/tailsignal_dashboard.html).
 
@@ -113,4 +113,4 @@ antibiotic-resistance trends and the regional antibiogram, kidney early warning,
 | Buyers commoditize raw data | Keep the highest-value signals in models and scores |
 | Model liability and drift | Model cards, calibration reports, drift monitoring, contractual scope |
 | Free portal undervalued | Tiering: free benchmarks, paid predictive features |
-| Scale gates arrive later than planned | Business case treats studies as upside; core revenue does not depend on them |
+| Scale gates arrive later than planned | Studies are 29% of Year-5 Base revenue; without them Year-5 revenue is $3.0M |

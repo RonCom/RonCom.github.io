@@ -6,7 +6,7 @@ description: Two five-year business cases for TailSignal, a partner network and 
 
 Two five-year cases, each a formula-driven workbook with Low, Base and High scenarios. The partner-network case
 does not break even within five years; the owned-network case pays back in Year 3 (Base). The difference is
-ownership of the data. Every price, volume and cost below is a **planning assumption** to be replaced with quotes and
+ownership of the data. Every price, volume and cost is a **planning assumption** to be replaced with quotes and
 company figures; the scale gates come from TailSignal's own analyses.
 
 ## Case 1: a partner network that pays clinics to share data
@@ -51,8 +51,8 @@ Scenarios scale the partner ramp (Low 0.6×, High 1.3×) and every price (Low 0.
    $1,000. The incentive has to buy data access cheaply, through free scorecards rather than cash.
 3. **Data licenses are the swing line.** Eight more licenses at $120,000 would break even in Year 5. Licenses unlock
    only once privacy suppression falls, at about 100 clinics.
-4. **Validation studies arrive late.** Common side-effect studies unlock in Year 4 and rare ones in Year 5 (Base). They
-   are upside, not the base of the plan.
+4. **Validation studies arrive late.** Common side-effect studies unlock in Year 4 and rare ones in Year 5 (Base). In the
+   Base case they are 29% of Year-5 revenue ($1.25M of $4.25M).
 
 ### When each product unlocks
 
@@ -117,7 +117,7 @@ Scenarios scale every internal benefit (Low 0.5×, High 1.4×) and every externa
 | **Net EBITDA impact** | **−939** | **−112** | **1,236** | **2,477** | **2,797** |
 | Cumulative | −939 | −1,051 | 185 | 2,662 | 5,459 |
 
-### Key assumptions
+### Assumptions
 
 | Assumption | Value | Basis |
 |---|---|---|

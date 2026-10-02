@@ -35,7 +35,7 @@ positive net benefit across thresholds of 5–50%. A seizure dictionary fell fro
 hypotheses failed outright or in part: segmentation stability as specified, forecast interval calibration (later
 fixed), cross-channel early warning and uplift targeting.
 
-**Conclusions.** Linkage quality and network size, not model choice, decide which products are viable. Breed-aware
+**Conclusions.** Linkage quality and network size decide which products are viable. Breed-aware
 shrinkage makes drug-safety screening specific enough to act on; clinic quality and resistance products work at
 modest scale; rare-event drug-safety studies need roughly 130 times a nine-clinic network.
 
@@ -46,14 +46,14 @@ attendance in a daycare booking system, skin and coat observations in a groomer'
 database. Corporate groups now own about 30% of US veterinary practices and over half of companion-animal revenue
 (AVMA 2025), and some operators own every service line, which makes linking these records commercially realistic.
 
-Three questions motivate this work:
+Linking these records raises three questions:
 
 1. Can records be linked across businesses accurately enough, and released privately enough, to be useful?
 2. Which analyses produce results a buyer could act on, and at what network size?
 3. What fails, and why?
 
-We answer them with a working platform rather than a design document, and we pre-registered each analysis so that
-negative results are reported alongside positive ones.
+We built a working platform to address them and pre-registered each analysis; negative results are reported
+alongside positive ones.
 
 ### 1.1 Contributions
 
@@ -120,7 +120,7 @@ results are unchanged. A separate 10× world (about 90,000 households) supports 
 **Calibration.** Parameters were set from published studies: Banfield and Waltham oral health data, VetCompass,
 CEPSAF anesthetic mortality, IRIS kidney staging and SDMA literature. Planted effects (a drug side effect, clinic
 quality differences, kidney decline, segment behavior, reminder effects) provide ground truth. Of 35 validation checks,
-26 pass; 6 were revised for stated reasons and pass in revised form, and 3 are genuine misses (Figure 1).
+26 pass; 6 were revised for stated reasons and pass in revised form, and 3 are misses (Figure 1).
 
 ![Simulator validation](../../assets/tailsignal/ehr_validation.png)
 
@@ -342,7 +342,7 @@ needs about 81,000 dogs per arm, roughly 130× this network's comparator group; 
 
 **Figure 2.** Risk ratios with 95% intervals by study, network size and design variant.
 
-- **Look-back matters.** Without 180 days of history, dogs with prior seizures cannot be excluded and the estimate
+- **Look-back prevents channeling bias.** Without 180 days of history, dogs with prior seizures cannot be excluded and the estimate
   falls to RR 0.80 (0.50–1.27): channeling bias, because epileptic dogs are steered away from isoxazolines.
 - **Pet-detail linkage fails at scale.** Name, breed, sex and birth year link 99% of true cross-clinic pairs, but only
   49% of proposed links are correct at 1× and 4% at 10×; false merges shrank the 10× isoxazoline cohort from 9,879 to
@@ -505,14 +505,14 @@ too small to learn it. Detecting a 5-point difference in effect between two segm
 ## 6. Discussion
 
 **Linkage decides what is possible.** Every downstream product rests on recognizing the same pet across businesses.
-The two-stage design worked because it mirrors how records are actually shared within households. The failure of
-pet-detail matching in clinic records (4% precision at 10×) is the most consequential single finding for a data
-business: owner identifiers must be negotiated into data agreements.
+The two-stage design worked because it mirrors how records are shared within households. Because
+pet-detail matching in clinic records fails (4% precision at 10×), owner identifiers must be negotiated into data
+agreements.
 
 **Shrinkage makes screening actionable.** In a database of nearly a million dog reports, frequentist screens raise
 40–70 chance alerts per 1,000 cells. The hierarchical model raises none and still finds a breed-specific risk that
 pooled analysis hides. Its cost is speed: the threshold that keeps false alarms near zero missed the isoxazoline signal
-until after the alert. A practical program would queue cases with a frequentist screen and prioritize them with the
+until after the alert. A program would queue cases with a frequentist screen and prioritize them with the
 Bayesian score, with linked clinic data (exposure counts) as the confirmation step.
 
 **Scale gates turn statistics into a growth plan.** Clinic complication benchmarks, stewardship scores, antibiograms and
@@ -520,12 +520,12 @@ breed-level drug-safety screens work now. Per-clinic death rates need about 5,00
 studies about 80× a nine-clinic network; rare ones about 130×. These numbers set partner-recruitment targets and which
 products a network can sell at each stage.
 
-**Real data humbles synthetic results.** The seizure dictionary lost more than half its precision on real notes for a
+**Real data cut synthetic performance.** The seizure dictionary lost more than half its precision on real notes for a
 reason no simulation would have produced. The kidney model's absolute accuracy is optimistic because the simulated
-decline was generated from the same lab values, which is why the comparisons between models, the stress test and the
-decision curve carry the conclusion rather than the AUC itself.
+decline was generated from the same lab values, so the conclusions rest on the comparisons between models, the stress
+test and the decision curve.
 
-**Negative results are informative.** The early-warning failure says what not to sell; the uplift failure says what
+**Negative results.** The early-warning failure says what not to sell; the uplift failure says what
 trial to run; the segmentation failure produced a better design.
 
 ## 7. Limitations
@@ -546,8 +546,8 @@ trial to run; the segmentation failure produced a better design.
 
 A linked, privacy-protected pet health record supports products that individual businesses cannot build: specific
 breed-aware drug-safety screening, risk-adjusted clinic quality measurement, regional resistance intelligence and
-early kidney-disease flags. The binding constraints are linkage through owner identifiers and network volume, both of
-which can be stated in advance and planned for.
+early kidney-disease flags. Which products are feasible depends on linkage through owner identifiers and on network
+volume, and both requirements can be stated in advance.
 
 ## Reproducibility
 

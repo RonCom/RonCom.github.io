@@ -4,7 +4,7 @@ description: TailSignal's architecture, data model, record linkage, privacy cont
 
 # Platform and engineering
 
-TailSignal is built from ordinary, testable parts: Python and uv, DuckDB and dbt locally, a Snowflake target
+TailSignal is built from testable parts: Python and uv, DuckDB and dbt locally, a Snowflake target
 configured in dbt, Splink for record linkage, FastAPI for the data API, and GitHub Actions for tests. One command
 rebuilds the platform from raw files in about three minutes. Every stage that a buyer or regulator would ask about,
 from linkage quality to privacy to release reproducibility, has an automated check.
@@ -40,7 +40,7 @@ flowchart LR
 
 | Layer | What it does | Where |
 |---|---|---|
-| Generator | Six partner systems with realistic inconsistencies: typos in breed names, phone formats, missing microchips, three different diagnosis coding schemes | `src/tailsignal/synth/` |
+| Generator | Six partner systems with inconsistencies: typos in breed names, phone formats, missing microchips, three different diagnosis coding schemes | `src/tailsignal/synth/` |
 | Public ingest | openFDA adverse events (flattened to Parquet), FDA NARMS isolates, Census business counts, city pet licenses, PetEVAL notes | `src/tailsignal/ingest/` |
 | Staging | One model per source table: names, phones, dates, units and species codes normalized | `dbt/models/staging/` (10 models) |
 | Intermediate | Breed taxonomy (exact, then fuzzy, then flagged for review); diagnosis taxonomy (codes and free text to 12 conditions plus wellness); one profile per pet per source | `dbt/models/intermediate/` |

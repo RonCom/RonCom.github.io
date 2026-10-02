@@ -21,7 +21,7 @@ owns its clinics outright.
 <!-- more -->
 
 !!! tip "Full write-up"
-    This post is the short version. The [full TailSignal write-up](../../projects/tailsignal/index.md) has pages for
+    The [full TailSignal write-up](../../projects/tailsignal/index.md) has pages for
     executives, sales, engineering and research, a [research paper](../../projects/tailsignal/paper.md), the
     [business case with an interactive explorer](../../projects/tailsignal/business-case.md) and a
     [customer portal demo](../../projects/tailsignal/portal.md).
@@ -38,7 +38,7 @@ owns its clinics outright.
 ## Why synthetic data, and what is real
 
 No one hands clinic records to a portfolio project, so the partner data (clinics, daycare, grooming, wellness plans) is
-simulated from a fixed seed. Simulation has one real advantage: every method can be checked against a known answer. I
+simulated from a fixed seed. Simulation has one advantage: every method can be checked against a known answer. I
 planted a drug side effect, clinic quality differences and kidney decline, then asked whether each method recovered
 them. Its weakness is that I wrote the world, so absolute accuracy is optimistic. I treat the comparisons between
 methods as the result.
@@ -66,11 +66,11 @@ Matching households first, then pets within each household, fixed it.
 | One-step probabilistic model | Precision 0.48 (siblings merged) |
 | **Households, then pets** | **F1 0.983** |
 
-Privacy is enforced in the pipeline, not by policy: every released record shares its profile with at least 10 others,
+Privacy is enforced in the pipeline: every released record shares its profile with at least 10 others,
 and a dbt test fails the build if any product breaks that. 92% of pets can be released; rare breed groups need more
 partners. Owner identifiers never reach a data product.
 
-Later, clinic records without owner details showed why this matters. Matching on pet details alone (name, breed, birth
+Later, on clinic records without owner details, matching on pet details alone (name, breed, birth
 date) fell to 4% precision at ten times the network's size. Owner identifiers belong in data-sharing agreements.
 
 ## Design choice 2: pool across breeds for drug safety
@@ -87,7 +87,7 @@ advance.
 
 It also missed something. Isoxazoline flea drugs and seizures, the subject of an FDA warning in 2018: the excess is real
 (about 1.5 times expected) but below the alert threshold I set in advance. The threshold that keeps false alarms near
-zero also delays true signals. That trade-off should be the buyer's choice, made deliberately.
+zero also delays true signals. That trade-off should be the buyer's choice.
 
 ## Design choice 3: check text mining on real notes
 
@@ -136,7 +136,7 @@ before running anything and compared six models on index lab panels, predicting 
 | + urine protein, pH, white cells | 0.918 |
 | **+ SDMA** | **0.965** |
 
-Change over time is what separates early kidney decline from a cat whose creatinine simply runs high. SDMA, a newer
+Change over time separates early kidney decline from a cat whose creatinine runs high. SDMA, a newer
 kidney marker, adds the most. Flagging cats a long way ahead stays hard: at 99% specificity the best model catches 23%
 of cats diagnosed 12–24 months later, against 44% published on real Banfield data.
 
@@ -156,13 +156,13 @@ Two follow-up checks, each written down first:
 
 ## What failed, and what it taught
 
-Writing the test down first is only useful if the failures are reported. These are the ones that changed my plans:
+These failed tests changed my plans:
 
 | Test | What happened | What it means |
 |---|---|---|
 | Customer segments, first design | Unstable across resamples | Rebuilt on behavior rates; the revised segments are stable |
 | Demand forecast intervals | 80% ranges covered only 64% of weeks | Recalibrated from past errors (conformal): now 82%. Staffing to any upper range still cost more than staffing to the forecast |
-| Early warning from daycare | The signal was engagement, not early illness | Pets active in more channels simply get seen more |
+| Early warning from daycare | The signal was engagement, not early illness | Pets active in more channels get seen more |
 | Reminder targeting | Reminders help on average, but the pilot was too small to learn who | About 6,000 households to learn it; designed below |
 | Drug safety in clinic records | Recovers the planted risk only at 10× the network | Rare side effects need about 130× today's network |
 | Kidney: rechecks at lower prevalence | Expected to double; rose only 27% | At high specificity few healthy cats are flagged |
@@ -182,16 +182,10 @@ randomizing an extra reminder across 6,000 households, stratified by clinic and 
 detect a 5-point difference in the reminder's effect between low- and high-engagement households, which is the
 question the pilot was too small to answer.
 
-## What I took from it
+## Scale gates
 
-- **Linking is the product.** Every downstream result depends on recognizing the same pet across businesses, and owner
-  identifiers are the asset to negotiate for.
-- **Scale decides what can be sold.** Some products (complication scorecards, resistance tables) work today. Others
-  unlock at a stated volume, which turns statistics into a partner-recruitment plan.
-- **Real data finds what simulation hides.** "Fit for vaccination" cost the text dictionary half its precision, and no
-  simulated note would have shown it.
-- **Check your own labels.** The moderate agreement between my two readings was the least comfortable result, and
-  the most useful.
+Complication scorecards and resistance tables work at today's volume. Other products unlock at a stated volume, and
+those volumes set the partner-recruitment plan.
 
 ## Engineering
 
