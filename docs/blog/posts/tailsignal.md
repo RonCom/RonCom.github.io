@@ -27,7 +27,7 @@ owns its clinics outright.
     [customer portal demo](../../projects/tailsignal/portal.md).
 
 !!! abstract "TL;DR"
-    - **Data:** simulated partner records (6 systems, 4 file formats) plus real public data: 1.36M FDA adverse-event reports, 26,396 FDA NARMS bacterial isolates and 4,999 UK clinic notes (SAVSNET PetEVAL).
+    - **Data:** simulated partner records (6 systems, 3 file formats) plus real public data: 1.36M FDA adverse-event reports, 26,396 FDA NARMS bacterial isolates and 4,999 UK clinic notes (SAVSNET PetEVAL).
     - **Linking:** matching households first, then pets within each household, reached F1 0.983 against 0.904 for the usual phone-plus-pet-name rule.
     - **Drug safety:** a breed-aware Bayesian model on 970,167 real dog reports raised no false alarms where the standard method raised 43 per 1,000, and ranked the known herding-breed ivermectin risk in the top 30 rather than 235th or lower.
     - **Clinic scorecards:** risk-adjusted complication rates rank clinics reliably at current volume (rank correlation 0.97 with the truth); death rates need about 5,000 procedures per clinic.
