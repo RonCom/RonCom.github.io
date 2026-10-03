@@ -173,8 +173,10 @@ I built two business cases as formula-driven workbooks. For a data business that
 the base case does not break even within five years: partner incentives and license volume are the levers.
 
 The picture changes for a company that owns its clinics, such as Destination Pet. It owns the data, pays no one to
-share it, and captures the operating savings itself. In that case the base scenario reaches about $2.8M of net benefit
-in Year 5 and pays back in Year 3. Seventy percent of the value is staffing savings, not data sales. Six of the
+share it, and captures the operating savings itself. At 190 locations the base scenario reaches about $2.7M of net
+benefit in Year 5 and pays back in Year 4. Seventy-one percent of the value is staffing savings, not data sales. Buying
+data from about 100 independent vet clinics on top adds $0.4M in Year 5, all from drug-safety studies the owned network
+can't reach alone. Six of the
 assumptions need the company's own figures, so the case ships with an interactive version where each one is a slider.
 
 It also enables something the simulation could not do: a randomized reminder trial. Owning the clinics means

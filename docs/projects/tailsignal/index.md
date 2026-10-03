@@ -59,18 +59,20 @@ US pet industry spending reached $158 billion in 2025 across 95 million pet-owni
 
 ## What it is worth
 
-Two cases, both formula-driven workbooks with Low / Base / High scenarios and every assumption editable.
+Three cases, all formula-driven with Low / Base / High scenarios and every assumption editable.
 
-| | Partner network (pays clinics to share data) | Owned network (a company that owns its clinics) |
-|---|---|---|
-| Year-5 result, Base | Revenue $4.25M; EBITDA −$0.89M | Net EBITDA impact +$2.80M |
-| Payback | Not within 5 years in any scenario | Year 3 (Base), Year 2 (High) |
-| Largest value line | Embedded analytics (25% of revenue) and data licenses (23%) | Staffing savings from demand forecasting (70% of value) |
-| Largest cost | Partner incentives ($1,000 per clinic per year) and team | Data team and system integration across acquired brands |
-| Enterprise value at 12× | n/a | $33.6M (Base); $3.5M–$57.5M across scenarios |
+| | Partner network (pays clinics to share data) | Owned network (a company that owns its clinics) | Owned network + bought partner data |
+|---|---|---|---|
+| Year-5 result, Base | Revenue $4.25M; EBITDA −$0.89M | Net EBITDA impact +$2.72M | Net EBITDA impact +$3.14M |
+| Payback | Not within 5 years in any scenario | Year 4 (Base), Year 3 (High) | Year 4 (Base), Year 3 (High) |
+| Largest value line | Embedded analytics (25% of revenue) and data licenses (23%) | Staffing savings from demand forecasting (71% of value) | Staffing savings, then drug-safety studies ($1.25M) |
+| Largest cost | Partner incentives ($1,000 per clinic per year) and team | Data team and system integration across acquired brands | Same, plus partner fees, onboarding and two staff |
+| Enterprise value at 12× | n/a | $32.6M (Base); $2.9M–$56.3M across scenarios | $37.7M (Base) |
 
-The difference is ownership: an operator that owns every location owns its data, pays no partner incentives and
-captures operating savings directly. Details and the assumptions behind each line are on
+An operator that owns every location owns its data, pays no partner incentives and captures operating savings
+directly. The owned case uses 190 locations (public figure, January 2024) with 30 vet clinics; at 250 locations the
+Year-5 impact is $4.32M. Buying data from about 100 partner clinics pays only if drug-safety studies sell; without them,
+Year-5 impact is $2.39M, below the owned case. Details and the assumptions behind each line are on
 [Business case](business-case.md).
 
 ## What the results say not to sell yet
@@ -83,13 +85,14 @@ captures operating savings directly. Details and the assumptions behind each lin
 
 ## Decisions for leadership
 
-1. **Which network model applies.** Owned clinics make the case positive by Year 3; a partner network needs cheaper
-   data access (free scorecards rather than cash incentives) or more data licenses to break even.
+1. **Which network model applies.** Owned clinics make the case positive by Year 4; a partner network needs cheaper
+   data access (free scorecards rather than cash incentives) or more data licenses to break even. Buy partner data
+   only once a manufacturer commits to a drug-safety study.
 2. **First product.** Clinic complication and stewardship scorecards work at today's volume and give clinics something
    back, which earns data access.
 3. **Owner identifiers in every data agreement.** Matching on pet details alone collapsed to 4% precision at scale;
    owner identifiers are what make linkage work.
-4. **A staffing pilot before rollout.** Staffing savings carry 70% of the owned-network value and come from simulated
+4. **A staffing pilot before rollout.** Staffing savings carry 71% of the owned-network value and come from simulated
    data, so they need confirming in two or three locations first.
 
 ## What is real and what is simulated
