@@ -4,8 +4,7 @@ description: TailSignal's architecture, data model, record linkage, privacy cont
 
 # Platform and engineering
 
-TailSignal is built from testable parts: Python and uv, DuckDB and dbt locally, a Snowflake target
-configured in dbt, Splink for record linkage, FastAPI for the data API, and GitHub Actions for tests. One command
+TailSignal is built from testable parts: Python and uv, dbt models that build on DuckDB locally and on Snowflake, Splink for record linkage, FastAPI for the data API, and GitHub Actions for tests. One command
 rebuilds the platform from raw files in about three minutes. Every stage that a buyer or regulator would ask about,
 from linkage quality to privacy to release reproducibility, has an automated check.
 
@@ -132,18 +131,46 @@ clinic's scorecard beside the network median. Interactive docs at `/docs`.
 | What | Count |
 |---|---|
 | dbt data and privacy tests | 28 |
-| Python unit tests (run on every push by GitHub Actions) | 26 |
+| Python unit tests (run on every push by GitHub Actions) | 29 |
 | Pre-registered specifications, each written before its code ran | One per analysis, in `docs/` |
 | Fixed random seeds | Generator, simulations, bootstraps |
 
 Dependencies are locked with `uv`. Real data is downloaded by the ingest scripts and not stored in the repository;
 the PetEVAL corpus requires accepting its terms and is not redistributed.
 
+## Snowflake
+
+The same dbt project builds on a live Snowflake account and produces the same tables as the DuckDB build.
+
+| Step | What happens |
+|---|---|
+| Load | 10 raw partner files go to a Snowflake stage and into a `RAW` schema: CSV and pipe-delimited files as text columns, the nested vet JSON as one `VARIANT` column |
+| Build | dbt seeds, staging, intermediate, marts and products: 21 models and 22 tests, all passing |
+| Linkage | Splink runs in Python; its 26,099-row output table is copied up so both engines use the same clusters |
+| Reconcile | Every model's row count, then a row-by-row, column-by-column comparison of the core and product tables |
+
+Dialect differences (date parsing, `arg_max`, `count(*) filter`, lists versus arrays, JSON access, hashing) sit in
+one macro file, so each model has one definition. Access uses a key-pair service user with a least-privilege role;
+no password or key is stored in the repository.
+
+**Result: match.** All 22 models have equal row counts. In the row-by-row comparison, the 865,797 service events, 12,666
+pets, 11,614-row de-identified cohort and 1,728-row prevalence product are identical. Two differences remain and are
+understood: Snowflake reports the breed-match score as a whole percentage (every breed maps the same), and two
+benchmark rows differ by half a cent of rounding.
+
+The comparison found three defects, all fixed in both engines:
+
+| Defect | Effect | Fix |
+|---|---|---|
+| Ties in a pet's most common breed, ZIP or birth date were broken arbitrarily | Two DuckDB builds disagreed on 2 pets; DuckDB and Snowflake on about 300 | Every choice has an explicit tie-break |
+| Birth-year bands in the cohort product printed as "2015.0-2019.0" | Labels in the sold product | Integer bands: "2015-2019" |
+| Half-year median birth years rounded to even in DuckDB and up in Snowflake | 3 pets in different birth-year groups | Round down in both |
+
 ## Path to production
 
 | Today | In production |
 |---|---|
-| DuckDB locally; Snowflake target configured in dbt, not yet run against a live account | Snowflake (or the company's warehouse), raw files loaded to a stage, same dbt models |
+| DuckDB locally; the same models built and reconciled on a live Snowflake account | Snowflake (or the company's warehouse) as the system of record, loaded on a schedule |
 | Batch rebuild by one command | Orchestrated daily or weekly (Airflow or dbt Cloud), with freshness tests |
 | Demo API keys in a config file | Keys in a secrets store; usage logs into billing |
 | Simulated partner feeds | Connectors to each practice-management and booking system; the staging layer is where per-system differences are absorbed |
