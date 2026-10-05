@@ -20,7 +20,7 @@ Payment integrity teams have far more claims than reviewers, so the working ques
     - **Method:** compare each provider to peers in the same specialty and year using robust statistics, adjust for low volume, combine transparent rules with an Isolation Forest, and give every flag plain-language reasons.
     - **Result:** the score ranks providers later excluded by OIG well above chance: **AUC 0.71 (95% CI 0.64–0.76)**. The top 5% of the list holds **3.4×** the random share of later-excluded providers; the top 20% holds 53% of them.
     - **What didn't beat it:** supervised XGBoost, case-mix adjusted peers, and two other outlier detectors — including one that failed a test I wrote down before seeing the data.
-    - **From a list to an audit plan:** an integer program that chooses whom to audit under a fixed hour budget covered **50% vs 32%** of later-excluded providers' Medicare dollars on held-out years, with 25% fewer audits. A policy that learns from its own audits (a contextual bandit, tested on simulated audit findings) beats a model fitted once by 2–8% after billing patterns shift, depending on how strong the shift is.
+    - **From a list to an audit plan:** an integer program that chooses whom to audit under a fixed hour budget covered **50% vs 32%** of later-excluded providers' Medicare dollars on held-out years, with 25% fewer audits. A policy that learns from its own audits (a contextual bandit, tested on simulated audit findings) beats a model fitted once by 2% in the quarters after a billing pattern shifts, and by 5–8% when the shift is stronger.
     - **Stack:** Python, dbt (running on both DuckDB and Snowflake, reconciled row for row), Streamlit, uv. Code: [github.com/RonCom/medicare-fwa](https://github.com/RonCom/medicare-fwa).
 
 !!! warning "Outliers are not fraud"
@@ -59,7 +59,7 @@ The chart shows why: the bulk of physical therapists sit in a tight hump, and a 
 
 A provider with 15 patients can post an extreme rate by chance. Left alone, the top of the list fills with tiny practices whose numbers are mostly noise. I used **empirical-Bayes shrinkage** (Bühlmann credibility): each provider's rate is pulled toward the peer median in proportion to how little data backs it up.
 
-A rate from 20 patients gets less weight than the same rate from 2,000 patients. The amount of pull (*k*) is estimated from the data for each metric, specialty and year; it isn't set by hand. Insurance pricing uses the same method.
+A rate from 20 patients gets less weight than the same rate from 2,000 patients. The amount of pull (*k*) is estimated from the data for each metric, specialty and year; it isn't set by hand. Insurance pricing uses the same method, and it made the top of the list noticeably less dominated by low-volume providers.
 
 ## Design choice 4: metrics that map to known schemes
 
@@ -189,7 +189,7 @@ Five random seeds, 16 quarters:
 | **Thompson sampling, old evidence fades** | **$144.2M** | **+22%** |
 | Oracle (knows the truth) | $146.7M | +24% |
 
-Most of the gain comes from **modeling what audits find**: the model fitted once gets +20% of the +22%. Learning each quarter adds gain only when patterns change, and **only if old evidence fades**. The plain learner barely moved, because four years of history outweighed a few quarters of new audits. I added the fading version after seeing that, and I report it that way. When the new pattern was made stronger, the fading version's gain over the frozen model grew from 2% to 5–8%.
+Most of the gain comes from **modeling what audits find**: the model fitted once gets +20% of the +22%. Learning each quarter adds gain only when patterns change, and **only if old evidence fades**: over all 16 quarters the fading version beats the frozen model by 1.0–1.2%, and over the quarters after the 2022 shift by 2.0%, winning in every seed. The plain learner barely moved, because four years of history outweighed a few quarters of new audits. I added the fading version after seeing that, and I report it that way. When the new pattern was made stronger, the fading version's post-shift gain over the frozen model grew from 2% to 5–8%.
 
 ![Cumulative recovery and recovery per quarter as a share of the oracle](../../assets/medicare-fwa/audit_bandit.png)
 
