@@ -37,6 +37,15 @@ human labels (correctness agreement 92%, κ 0.68).
 
 [Write-up](blog/posts/policy-rag.md) · [Code on GitHub](https://github.com/RonCom/policy-rag)
 
+## minijev: a calibrated decision model on a laptop GPU
+
+A local rebuild of TypeSafe AI's Jev, a model that answers yes/no, multiple-choice and rubric questions with
+probabilities instead of text. Qwen3 with LoRA, trained with a proper scoring rule on synthetic data from a local
+teacher, on an 8 GB GPU. Best so far: 81.8% accuracy with calibration error 0.024 on 1,200 held-out questions (from
+72.3% / 0.247 untrained). In progress.
+
+[Write-up](blog/posts/minijev.md)
+
 ## Data modeling, end to end
 
 A tutorial from operational (OLTP) models to analytics, proven on DuckDB and carried to Postgres and Snowflake. In progress.
