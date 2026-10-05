@@ -20,7 +20,7 @@ Payment integrity teams have far more claims than reviewers, so the working ques
     - **Method:** compare each provider to peers in the same specialty and year using robust statistics, adjust for low volume, combine transparent rules with an Isolation Forest, and give every flag plain-language reasons.
     - **Result:** the score ranks providers later excluded by OIG well above chance: **AUC 0.71 (95% CI 0.64–0.76)**. The top 5% of the list holds **3.4×** the random share of later-excluded providers; the top 20% holds 53% of them.
     - **What didn't beat it:** supervised XGBoost, case-mix adjusted peers, and two other outlier detectors — including one that failed a test I wrote down before seeing the data.
-    - **From a list to an audit plan:** an integer program that chooses whom to audit under a fixed hour budget covered **50% vs 32%** of later-excluded providers' Medicare dollars on held-out years, with 25% fewer audits. A policy that learns from its own audits (a contextual bandit, tested on simulated audit findings) beats a model fitted once by 2% in the quarters after a billing pattern shifts, and by 5–8% when the shift is stronger.
+    - **From a list to an audit plan:** an integer program that chooses whom to audit under a fixed hour budget covered **50% vs 32%** of later-excluded providers' Medicare dollars on held-out years, with 25% fewer audits. A policy that learns from its own audits (a contextual bandit, tested on simulated audit findings) beats a model fitted once by 2% over 2022–2023, after a new billing pattern starts predicting findings, and by 5–8% when that pattern is stronger.
     - **Stack:** Python, dbt (running on both DuckDB and Snowflake, reconciled row for row), Streamlit, uv. Code: [github.com/RonCom/medicare-fwa](https://github.com/RonCom/medicare-fwa).
 
 !!! warning "Outliers are not fraud"
@@ -189,7 +189,7 @@ Five random seeds, 16 quarters:
 | **Thompson sampling, old evidence fades** | **$144.2M** | **+22%** |
 | Oracle (knows the truth) | $146.7M | +24% |
 
-Most of the gain comes from **modeling what audits find**: the model fitted once gets +20% of the +22%. Learning each quarter adds gain only when patterns change, and **only if old evidence fades**: over all 16 quarters the fading version beats the frozen model by 1.0–1.2%, and over the quarters after the 2022 shift by 2.0%, winning in every seed. The plain learner barely moved, because four years of history outweighed a few quarters of new audits. I added the fading version after seeing that, and I report it that way. When the new pattern was made stronger, the fading version's post-shift gain over the frozen model grew from 2% to 5–8%.
+Most of the gain comes from **modeling what audits find**: the model fitted once gets +20% of the +22%. Learning each quarter adds gain only when patterns change, and **only if old evidence fades**: over all 16 quarters the fading version beats the frozen model by 1.0–1.2%, and over 2022–2023, after the shift, by 2.0%, winning in every seed. The plain learner barely moved, because four years of history outweighed a few quarters of new audits. I added the fading version after seeing that, and I report it that way. When the new pattern was made stronger, the fading version's post-shift gain over the frozen model grew from 2% to 5–8%.
 
 ![Cumulative recovery and recovery per quarter as a share of the oracle](../../assets/medicare-fwa/audit_bandit.png)
 
