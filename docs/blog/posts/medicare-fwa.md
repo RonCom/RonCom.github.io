@@ -11,9 +11,7 @@ description: Flagging outlier Medicare providers from public CMS data, validated
 
 # Finding outlier Medicare providers with public data
 
-Payment integrity teams have far more claims than reviewers. The practical question is not "is this provider committing fraud?" but "**which providers should a reviewer look at first?**" I built a small, end-to-end pipeline to answer that question using only public CMS data, and tested whether its ranking points toward providers the HHS Office of Inspector General (OIG) later excluded from Medicare.
-
-This post explains the choices behind it: what I built, why, what did not work, and what the results can and cannot support.
+Payment integrity teams have far more claims than reviewers, so the working question is "**which providers should a reviewer look at first?**" I built an end-to-end pipeline that answers it from public CMS data, and tested whether its ranking points toward providers the HHS Office of Inspector General (OIG) later excluded from Medicare.
 
 <!-- more -->
 
@@ -22,32 +20,32 @@ This post explains the choices behind it: what I built, why, what did not work, 
     - **Method:** compare each provider to peers in the same specialty and year using robust statistics, adjust for low volume, combine transparent rules with an Isolation Forest, and give every flag plain-language reasons.
     - **Result:** the score ranks providers later excluded by OIG well above chance: **AUC 0.71 (95% CI 0.64–0.76)**. The top 5% of the list holds **3.4×** the random share of later-excluded providers; the top 20% holds 53% of them.
     - **What didn't beat it:** supervised XGBoost, case-mix adjusted peers, and two other outlier detectors — including one that failed a test I wrote down before seeing the data.
-    - **From a list to an audit plan:** an integer program that chooses whom to audit under a fixed hour budget covered **50% vs 32%** of later-excluded providers' Medicare dollars on held-out years, with 25% fewer audits. A policy that learns from its own audits (a contextual bandit, tested on simulated audit findings) helps most when fraud patterns shift.
+    - **From a list to an audit plan:** an integer program that chooses whom to audit under a fixed hour budget covered **50% vs 32%** of later-excluded providers' Medicare dollars on held-out years, with 25% fewer audits. A policy that learns from its own audits (a contextual bandit, tested on simulated audit findings) beats a model fitted once by 2–8% after billing patterns shift, depending on how strong the shift is.
     - **Stack:** Python, dbt (running on both DuckDB and Snowflake, reconciled row for row), Streamlit, uv. Code: [github.com/RonCom/medicare-fwa](https://github.com/RonCom/medicare-fwa).
 
 !!! warning "Outliers are not fraud"
-    A high score means a provider bills differently from peers. Many will have legitimate reasons (a specialized practice, a sicker population). The score is a way to order a review queue, not a finding. No individual providers are named here.
+    A high score means a provider bills differently from peers. A specialized practice or a sicker patient population can produce the same pattern legitimately. The score orders a review queue; it doesn't establish wrongdoing. No individual providers are named here.
 
 ## Why this problem, and why public data
 
-Fraud, waste and abuse (FWA) in healthcare is mostly found by comparing a provider with similar providers. A physical therapist who bills twice as many 15-minute units per patient visit as nearly every other physical therapist is worth a look, whatever the reason turns out to be. Health plans do this with their own claims. CMS publishes enough aggregated data to do a version of it in the open, which means anyone can check the work.
+Health plans screen for fraud, waste and abuse (FWA) by comparing each provider with similar providers in their own claims. A physical therapist who bills twice as many 15-minute units per patient visit as nearly every other physical therapist is worth a look, whatever the reason turns out to be. CMS publishes enough aggregated data to run a version of this in the open, so anyone can rerun and check it.
 
 The data:
 
-| Source | What it gives | Use here |
+| Source | Contents | Use here |
 |---|---|---|
 | CMS Physician & Other Practitioners (by provider, and by provider and service) | Services, beneficiaries, payments, and counts by billing code for each provider | Utilization, coding and billing-pattern metrics |
 | CMS Part D Prescribers | Drug claims and costs per prescriber | Opioid, long-acting opioid, brand-name and cost metrics |
 | NCCI Medically Unlikely Edits (MUE) | CMS's maximum units per code per patient per day | A check on units billed against the limit |
 | OIG List of Excluded Individuals/Entities (LEIE) | Providers barred from federal programs, with dates and reasons | The validation label |
 
-I limited the scope to three specialties that often show up in enforcement actions. That kept downloads small (the API is paged with a specialty filter rather than pulling multi-gigabyte files) and let me design metrics that actually mean something for each specialty.
+I limited the scope to three specialties. That kept downloads small (the API is paged with a specialty filter, so there's no multi-gigabyte file to pull) and meant each metric could target codes the specialty bills, such as timed therapy units for physical therapists.
 
 ## Design choice 1: compare providers to their own peers
 
 A pain physician and a physical therapist bill completely different codes, and billing norms drift from year to year. So every metric is compared **within specialty × year**. A provider is unusual only if they are unusual relative to people who do the same work in the same year.
 
-Later, this also turned out to matter for validation (below): raw scores are not comparable across specialties, because exclusion rates differ about 20-fold between them.
+Validation needs the same split (below): exclusion rates differ about 20-fold between specialties, so pooled scores aren't comparable.
 
 ## Design choice 2: robust statistics, not the textbook bell curve
 
@@ -61,11 +59,11 @@ The chart shows why: the bulk of physical therapists sit in a tight hump, and a 
 
 A provider with 15 patients can post an extreme rate by chance. Left alone, the top of the list fills with tiny practices whose numbers are mostly noise. I used **empirical-Bayes shrinkage** (Bühlmann credibility): each provider's rate is pulled toward the peer median in proportion to how little data backs it up.
 
-In plain terms, a rate from 20 patients is trusted less than the same rate from 2,000 patients. The amount of pull (*k*) is estimated from the data for each metric, specialty and year, not set by hand. This is standard in insurance pricing, and it made the top of the list noticeably less dominated by low-volume providers.
+A rate from 20 patients gets less weight than the same rate from 2,000 patients. The amount of pull (*k*) is estimated from the data for each metric, specialty and year; it isn't set by hand. Insurance pricing uses the same method.
 
 ## Design choice 4: metrics that map to known schemes
 
-Every metric exists because it corresponds to a recognizable billing problem. That makes a flag explainable to an investigator.
+Each metric corresponds to a known billing scheme, so a flag tells an investigator which scheme to check.
 
 | Metric | Scheme it points to |
 |---|---|
@@ -78,29 +76,29 @@ Every metric exists because it corresponds to a recognizable billing problem. Th
 | Share of passive modalities; concentration in few codes | Low-value services, narrowed high-yield billing |
 | Opioid share, long-acting share, brand share, drug cost | Prescribing risk |
 
-The MUE check is a good example of a small detail that matters. Many codes have an MUE of 1 unit per day, so "at or above the limit" is true for almost everyone and carries no information. I scored only codes whose limit is 2 or more.
+Many codes have an MUE of 1 unit per day, so "at or above the limit" is true for almost everyone who bills them and separates no one. I scored only codes whose limit is 2 or more.
 
 ## Design choice 5: transparent rules first, a model second
 
 The score has two parts:
 
-1. **Rules:** the average of each provider's three largest robust z-scores. A provider is flagged when it passes 3.5. This is easy to explain: "services per patient and units per visit are both far above peers."
+1. **Rules:** the average of each provider's three largest robust z-scores. A provider is flagged when it passes 3.5. A reviewer reads it as: "services per patient and units per visit are both far above peers."
 2. **Isolation Forest**, fit separately for each peer group, to catch **unusual combinations** that no single metric shows.
 
-The final score is a **2:1 weighted average** of the two, each first turned into a within-group percentile. I fixed that weighting before looking at validation results, so it could not be tuned to the answer. Every provider carries its top three drivers in plain language, which is what a reviewer actually reads.
+The final score is a **2:1 weighted average** of the two, each first turned into a within-group percentile. I fixed that weighting before looking at validation results, so it couldn't be tuned to the answer. Every provider carries its top three drivers in plain language; that's the text a reviewer reads.
 
 ![Most common top drivers among flagged providers](../../assets/medicare-fwa/top_drivers.png)
 
 ## Design choice 6: a validation label that doesn't cheat
 
-There is no public "confirmed fraud" label. The closest is the OIG exclusion list. I defined a positive as a provider **excluded within three years after the data year**, matched by the same NPI (national provider ID). The ranking is built from year *Y* data and tested against what happened after *Y*, which is how it would be used.
+There's no public "confirmed fraud" label. The closest is the OIG exclusion list. I defined a positive as a provider **excluded within three years after the data year**, matched by the same NPI (national provider ID). The ranking is built from year *Y* data and tested against what happened after *Y*, which is how it would be used.
 
-Several traps came up while building this, and catching them changed the numbers more than any model change did:
+Four traps came up while building this, and catching them changed the numbers more than any model change did:
 
-- **Pooling inflates results.** Scoring all specialties together gave an AUC of 0.78, but mostly because one specialty has both higher scores and far more exclusions. Measured within specialty, the honest number is lower. All results here are within-group.
+- **Pooling inflates results.** Scoring all specialties together gave an AUC of 0.78, but mostly because one specialty has both higher scores and far more exclusions. Measured within specialty, it's 0.71. All results here are within-group.
 - **Name matching adds noise.** Some LEIE rows have no NPI. Matching those by name and state added more false matches than true ones (AUC fell to 0.66), so it is reported only as a sensitivity check.
-- **The current list forgets people.** The LEIE drops providers once they are reinstated, which would quietly turn some real positives into negatives. I rebuilt a cumulative history from archived snapshots (via the Internet Archive) plus OIG's monthly supplements.
-- **Providers repeat across years.** The same provider appears up to nine times. Confidence intervals come from a bootstrap that resamples **providers**, not provider-years, so the same person does not count as independent evidence nine times.
+- **The current list forgets people.** The LEIE drops providers once they are reinstated, which would relabel some excluded providers as never excluded. I rebuilt a cumulative history from archived snapshots (via the Internet Archive) plus OIG's monthly supplements.
+- **Providers repeat across years.** The same provider appears up to nine times. Confidence intervals come from a bootstrap that resamples **providers**, not provider-years, so the same person doesn't count as independent evidence nine times.
 
 ## Results
 
@@ -122,11 +120,11 @@ Reading it: if you pick one later-excluded provider and one who was not, the sco
 
 The result holds year by year (AUC between 0.62 and 0.83 for each data year from 2016 to 2024), and it holds for fraud-related exclusion types alone. Utilization metrics carry most of the signal: services per beneficiary, code intensity, units per patient-day and MUE headroom.
 
-One lesson in humility: with only 2021–2024 data, Interventional Pain Management looked like the strongest specialty. Adding 2016–2020 erased that. It was noise from a small sample, which is exactly what the intervals were warning about.
+With only 2021–2024 data, Interventional Pain Management looked like the strongest specialty. Adding 2016–2020 erased that: it was small-sample noise, inside the wide intervals.
 
-## What didn't work (and why that matters)
+## What didn't work
 
-I tested ideas from two published papers[^jk][^hamid] against a **frozen** copy of the baseline, rather than folding them into the model as I went. A change would be adopted only if it clearly beat the baseline.
+I tested ideas from two published papers[^jk][^hamid] against a **frozen** copy of the baseline. A change would be adopted only if it beat the baseline within specialty with non-overlapping intervals.
 
 | Idea | AUC | Verdict |
 |---|---|---|
@@ -137,9 +135,9 @@ I tested ideas from two published papers[^jk][^hamid] against a **frozen** copy 
 | Rules + ECOD detector | 0.70 | No gain |
 | Rules + CBLOF detector | 0.72 | Failed pre-registered test |
 
-**Supervised learning** improved as labels grew (from near chance with 29 positives to 0.65–0.67 with 67) but still trailed. With 67 positives, a model that learns from labels has little to learn from; an unsupervised peer comparison does not need them. With audit outcomes as labels, that would likely flip.
+**Supervised learning** improved as labels grew (from near chance with 29 positives to 0.65–0.67 with 67) but still trailed. With 67 positives, a model that learns from labels has little to learn from; an unsupervised peer comparison doesn't need them. With audit outcomes as labels, that would likely flip.
 
-**CBLOF** looked better than Isolation Forest in three runs on 2021–2024. But those runs shared the same labels, so they were not independent evidence. Before downloading 2016–2020, I wrote down a test in the repository: CBLOF replaces Isolation Forest only if it wins on the new, held-out 2016–2019 years. It did not (AUC difference +0.009, interval −0.013 to +0.032). Isolation Forest stayed. Writing the rule down first is what kept me from adopting a result that did not replicate.
+**CBLOF** looked better than Isolation Forest in three runs on 2021–2024. But those runs shared the same labels, so they were not independent evidence. Before downloading 2016–2020, I wrote down a test in the repository: CBLOF replaces Isolation Forest only if it wins on the new, held-out 2016–2019 years. It didn't (AUC difference +0.009, interval −0.013 to +0.032). Isolation Forest stayed. Without the written rule, I'd have adopted a result that didn't replicate.
 
 **Why published results look better.** One paper reports much higher accuracy on similar data. I rebuilt its setup on my data and changed one thing at a time:
 
@@ -150,9 +148,9 @@ I tested ideas from two published papers[^jk][^hamid] against a **frozen** copy 
 | Rank within specialty-year | 0.66 |
 | Predict *future* exclusions | 0.62 |
 
-Most of the headline number came from the same provider appearing in both training and test data, and from pooling specialties with different base rates. Under the same strict test, the unsupervised baseline keeps 0.70. This was the most useful part of the project for me: it shows how much evaluation design, not model choice, drives the number.
+Most of the headline number came from the same provider appearing in both training and test data, and from pooling specialties with different base rates. Under the same strict test, the unsupervised baseline keeps 0.70. The evaluation changes moved AUC by 0.31; no model change in this project moved it by more than 0.05.
 
-I also audited a popular Kaggle "healthcare fraud" dataset as a possible second benchmark. It turned out to be synthetic: one ratio column alone separates the fraud label (AUC 0.99), clinical fields carry no signal, and its provider IDs are not NPIs, so it cannot be linked to real providers. I did not use it.
+I also audited a popular Kaggle "healthcare fraud" dataset as a possible second benchmark. It turned out to be synthetic: one ratio column alone separates the fraud label (AUC 0.99), clinical fields carry no signal, and its provider IDs aren't NPIs, so it can't be linked to real providers. I didn't use it.
 
 ## From a ranked list to an audit plan
 
@@ -171,15 +169,15 @@ The test gives the plan the same hours the top-5% review list would need, on hel
 | Audit down the ranking | 14,312 | 11 (18%) | 32% [10–47%] |
 | **Optimized plan** | **10,690** | **18 (29%)** | **50% [34–61%]** |
 
-The dollar gain is +18 points, with an interval (+5 to +39) that clears zero. The count gain (+11 points, −2 to +25) is suggestive at this sample size. At smaller budgets the gap is wider: at the top-1% budget the plan reaches 34% of the dollars, against 1% for the ranking.
+The dollar gain is +18 points, with an interval (+5 to +39) that clears zero. The count gain (+11 points, −2 to +25) has an interval that includes zero at this sample size. At smaller budgets the gap is wider: at the top-1% budget the plan reaches 34% of the dollars, against 1% for the ranking.
 
 ![Audit budget frontier: share of later-excluded providers and their dollars reached at each budget](../../assets/medicare-fwa/audit_budget_frontier.png)
 
 ### A policy that learns from its own audits
 
-The plan above is fitted once. A real unit would learn from each quarter's audits and re-plan. Only audited providers reveal a result, which makes this a **contextual bandit** problem (one-step reinforcement learning): the policy balances auditing providers it is confident about against learning about the rest.
+The plan above is fitted once. An investigations unit would learn from each quarter's audits and re-plan. Only audited providers reveal a result, which makes this a **contextual bandit** problem (one-step reinforcement learning): the policy balances auditing providers it's confident about against learning about the rest.
 
-**Why the audit findings had to be simulated.** Exclusions are far too sparse to learn from. The held-out years contain 62 later-excluded provider-years among 285,039, and a quarter's audit list holds fewer than one of them on average. No policy can update on one data point a quarter; any difference would be noise. Real audits find much more than exclusion-grade fraud (overpayments, unsupported units, upcoding), but those results are not public. So I simulated each audit's finding from the same billing outliers the score measures, through weights the policy never sees. Later-excluded providers are near-certain findings. That gives about 555 findings a quarter to learn from. From 2022, a new pattern appears: billing for passive or unattended treatments starts to predict findings.
+**Why the audit findings had to be simulated.** Exclusions are far too sparse to learn from. The held-out years contain 62 later-excluded provider-years among 285,039, and a quarter's audit list holds fewer than one of them on average. No policy can update on one data point a quarter; any difference would be noise. Audits also find overpayments, unsupported units and upcoding that never reach exclusion, but those results aren't public. So I simulated each audit's finding from the same billing outliers the score measures, through weights the policy never sees. Later-excluded providers are near-certain findings. That gives about 555 findings a quarter to learn from. From 2022, a new pattern appears: billing for passive or unattended treatments starts to predict findings.
 
 Five random seeds, 16 quarters:
 
@@ -191,11 +189,11 @@ Five random seeds, 16 quarters:
 | **Thompson sampling, old evidence fades** | **$144.2M** | **+22%** |
 | Oracle (knows the truth) | $146.7M | +24% |
 
-Two lessons came out of this. First, most of the gain comes from **modeling what audits find**, not from learning over time. Second, learning pays off when patterns change, and **only if old evidence fades**. The plain learner barely moved, because four years of history outweighed a few quarters of new audits. I added the fading version after seeing that, and I report it that way. When the new pattern was made stronger, the fading version's gain over the frozen model grew from 2% to 5–8%.
+Most of the gain comes from **modeling what audits find**: the model fitted once gets +20% of the +22%. Learning each quarter adds gain only when patterns change, and **only if old evidence fades**. The plain learner barely moved, because four years of history outweighed a few quarters of new audits. I added the fading version after seeing that, and I report it that way. When the new pattern was made stronger, the fading version's gain over the frozen model grew from 2% to 5–8%.
 
 ![Cumulative recovery and recovery per quarter as a share of the oracle](../../assets/medicare-fwa/audit_bandit.png)
 
-These results use real providers with a simulated outcome, not real recoveries. They show how the methods compare, not what an audit program would recover.
+These results use actual providers with a simulated outcome. They compare the methods with each other; they don't estimate what an audit program would recover.
 
 ## Engineering: built like it would be run
 
@@ -206,15 +204,15 @@ These results use real providers with a simulated outcome, not real recoveries. 
 
 ## Limits
 
-- **The label is noisy.** Exclusion lags misconduct by years and captures a small fraction of FWA. Many true problems never lead to exclusion.
+- **The label is noisy.** Exclusion lags misconduct by years and captures a small fraction of FWA.
 - **Aggregates hide claim-level patterns.** Modifier misuse (such as 59/X modifiers to bypass bundling edits), date-of-service patterns and diagnosis coding all need claim lines, which public data does not provide.
 - **Small providers are missing.** CMS suppresses counts under 11 beneficiaries.
 - **Peers are national.** State or practice-setting peers might change results.
-- **67 positives is few.** The intervals are honest, and they are wide.
+- **67 positives is few.** The intervals are wide: AUC 0.64–0.76 overall, 0.50–0.78 for Interventional Pain Management.
 
 ## What I'd do with a health plan's data
 
-Claim lines would allow modifier and edit-bypass checks, episode-level patterns and referral networks. Audit and recovery outcomes would give a much richer label than exclusions (they would replace the simulated findings above), and at that point a supervised layer on top of these peer features becomes worth building. The core ideas would carry over unchanged: compare to real peers, adjust for volume, keep reasons readable, and evaluate the way the list will actually be used.
+Claim lines would allow modifier and edit-bypass checks, episode-level patterns and referral networks. Audit and recovery outcomes would give a much richer label than exclusions (they would replace the simulated findings above), and at that point a supervised layer on top of these peer features becomes worth building.
 
 The code, results, and full experiment log are at [github.com/RonCom/medicare-fwa](https://github.com/RonCom/medicare-fwa).
 
