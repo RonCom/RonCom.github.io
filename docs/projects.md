@@ -10,6 +10,16 @@ business case. Every analysis had a pre-registered test; the failures are report
 
 [Executive summary](projects/tailsignal/index.md) · [Research paper](projects/tailsignal/paper.md) · [Customer portal demo](projects/tailsignal/portal.md) · [Business case](projects/tailsignal/business-case.md) · [Blog post](blog/posts/tailsignal.md) · [Code on GitHub](https://github.com/RonCom/tailsignal)
 
+## Group underwriting and stop-loss pricing
+
+Prices specific and aggregate stop-loss for synthetic employer groups of 50–2,500 lives from member-level Medicare
+claims (CMS DE-SynPUF). Tweedie LightGBM for next-year cost, logistic models for high-cost claimants, a Pareto tail
+spliced at $100k and Monte Carlo group totals. Five pre-registered rounds on independent samples: group claims came in at
+0.995–1.001 of expected, and the 2010 test year failed on a 36% drop in the synthetic data's claims. Kedro pipelines;
+dbt features reconciled row for row across Python, DuckDB and Snowflake.
+
+[Write-up](blog/posts/group-underwriting.md) · [Code on GitHub](https://github.com/RonCom/group-underwriting)
+
 ## Medicare payment integrity outlier screening
 
 Flags Medicare providers whose billing is unusual against same-specialty peers, and tests whether those flags come before
