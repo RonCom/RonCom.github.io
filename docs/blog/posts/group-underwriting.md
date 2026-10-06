@@ -6,7 +6,7 @@ authors:
 categories:
   - Healthcare
   - Insurance pricing
-description: Pricing stop-loss for employer groups from member-level claims, tested on five independent synthetic Medicare populations against predictions written down first.
+description: Pricing stop-loss for employer groups from member-level claims, tested on six independent synthetic Medicare populations against predictions written down first.
 ---
 
 # Pricing stop-loss for employer groups from claims data
@@ -19,13 +19,13 @@ that cost sits in the tail?
 
 I built a pipeline that answers both from member-level medical and pharmacy claims, prices
 synthetic employer groups, and then checks the price against what the groups cost the
-following year. The first test missed on price level; four more rounds on new populations found
+following year. The first test missed on price level; five more rounds on new populations found
 why and settled the model of record.
 
 <!-- more -->
 
 !!! abstract "TL;DR"
-    - **Data:** CMS DE-SynPUF synthetic Medicare claims (inpatient, outpatient, professional and Part D), 2008–2010, five independent samples (Samples 2–6), cut into synthetic employer groups of 50–2,500 lives.
+    - **Data:** CMS DE-SynPUF synthetic Medicare claims (inpatient, outpatient, professional and Part D), 2008–2010, six independent samples (Samples 2–7), cut into synthetic employer groups of 50–2,500 lives.
     - **Method:** point-in-time features with claims runout, a Tweedie GLM baseline against Tweedie LightGBM for next-year cost, high-cost-claimant probabilities at $25k / $50k / $100k, a generalized Pareto tail, and Monte Carlo pricing of specific and aggregate stop-loss per group.
     - **Result:** on populations no model had seen, group claims came in at **0.995–1.00 of expected** across ~205 groups per sample. The final configuration hit **0.999 [0.990–1.007]** on the last holdout.
     - **What the first test got wrong:** the out-of-time year (2010) came in at 0.58 of expected because DE-SynPUF's 2010 claims are 36% thinner than 2009's, a data artifact no pricing method could foresee.
@@ -84,7 +84,7 @@ metrics and **groups** for group metrics, never rows.
 
 The same rule as in my [Medicare provider project](medicare-fwa.md): before each test, I committed
 predictions and adoption rules to the repository. A challenger replaces the frozen baseline only if
-its gain clears zero; every miss gets reported. Five rounds, five pre-registrations:
+its gain clears zero; every miss gets reported. Six rounds, six pre-registrations:
 
 | Round | Data | Predictions hit |
 |---|---|---|
@@ -93,6 +93,7 @@ its gain clears zero; every miss gets reported. Five rounds, five pre-registrati
 | 3. Re-test | Sample 4, 2008 → 2009 | 8 of 9 |
 | 4. Holdout | Sample 5, 2008 → 2009 | 6 of 7 |
 | 5. Aggregate layer | Sample 6, 2008 → 2009 | 5 of 5 |
+| 6. Credibility | Sample 7, 2008 → 2009 | 4 of 4 |
 
 ## Round 1: ranking works, level misses
 
@@ -191,6 +192,24 @@ in the same tenth of predicted cost. I wrote down five predictions and ran both 
 All five predictions hit, and the resampled ratios replaced Tweedie. The aggregate layer's
 expected cost drops 78%: with a 125% corridor, a breach needs net claims 25% above expected, and
 the narrower distribution puts less probability there.
+
+## Round 6: does a group's own experience add anything?
+
+An underwriter renewing a group blends a manual rate with the group's own claims experience,
+weighted by credibility Z = n / (n + k), where n is the group's prior-year member-months. I fitted
+k on Samples 3–6 for two manual rates, froze it, and tested on Sample 7 (72,309 new members, 207
+groups):
+
+| Manual rate | k (member-months) | Median Z | Change in group PMPM error from blending |
+|---|---|---|---|
+| Claims model of record | 293,317 | 0.008 | −0.4% [−1.5% to +0.6%] |
+| Age band × sex table | 3,409 | 0.395 | −34.7% [−44.6% to −22.5%] |
+
+Blending experience into an age-and-sex rate cuts its error by a third. Blending it into the
+claims model changes nothing, because the model already scores each member's prior-year claims,
+which is what the group's experience is made of. The unblended claims model still beats the
+blended demographic rate by $6.55 PMPM [$2.57–$10.48]. All four predictions hit, and blending
+wasn't adopted.
 
 ## Small groups have the widest loss-ratio swings
 
