@@ -124,7 +124,7 @@ A trade that small doesn't move daily volume, returns or short share. That went 
 
 ## What it would take
 
-The screen measures abnormal trading before announcements, and in this data the SEC-charged trades aren't where that trading comes from. Options are where a small trade stands out, because a single contract trades far less than the stock. Options data was the one source dropped, because no free source has expired contracts back to 2017, and H2 would have tested exactly that channel. Trade-level data (FINRA's monthly short-sale transaction files, or the consolidated tape) is the other route; the loader exists, but the files run to a few hundred gigabytes for two features.
+The screen measures abnormal trading before announcements, and in this data the SEC-charged trades aren't where that trading comes from. Options are where a small trade stands out, because both the overall volume and the size of the average trade are far less than in the underlying stock. Options data was the one source dropped, because no free source has expired contracts back to 2017, and H2 would have tested exactly that channel. Trade-level data (FINRA's monthly short-sale transaction files, or the consolidated tape) is the other route; the loader exists, but the files run to a few hundred gigabytes for two features.
 
 ## Engineering
 
