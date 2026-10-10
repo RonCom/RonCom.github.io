@@ -10,6 +10,16 @@ business case. Every analysis had a pre-registered test; the failures are report
 
 [Executive summary](projects/tailsignal/index.md) · [Research paper](projects/tailsignal/paper.md) · [Customer portal demo](projects/tailsignal/portal.md) · [Business case](projects/tailsignal/business-case.md) · [Blog post](blog/posts/tailsignal.md) · [Code on GitHub](https://github.com/RonCom/tailsignal)
 
+## Screening for trading before announcements
+
+Scores abnormal trading in the 20 days before 176,485 earnings announcements and 1,860 acquisitions (SEC EDGAR, FINRA
+off-exchange short volume, daily bars with delisted stocks), and tests it against SEC insider-trading charges read from
+litigation releases by a local LLM with a hand-checked accuracy gate. Pre-registered and scored once on 2021–2025: the
+main test failed (2.82× lift against a 3× pass line), the placebo and alert-budget tests passed, and the failure is
+explained: charged trades are a median 0.07% of the stock's volume over the window, too small for daily data.
+
+[Write-up](blog/posts/insider-screen.md) · [Code on GitHub](https://github.com/RonCom/insider-screen)
+
 ## Group underwriting and stop-loss pricing
 
 Prices specific and aggregate stop-loss for synthetic employer groups of 50–2,500 lives from member-level Medicare
