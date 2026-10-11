@@ -20,6 +20,12 @@ explained: charged trades are a median 0.07% of the stock's volume over the wind
 
 [Write-up](blog/posts/insider-screen.md) · [Code on GitHub](https://github.com/RonCom/insider-screen)
 
+## Which FINRA rules did this conduct break?
+
+Predicts the rule series FINRA charged in 6,198 disciplinary cases (2016-2026) from the case summary with rule numbers masked, with labels read from each case's AWC or decision and hand-checked. A TF-IDF baseline, fine-tuned ModernBERT and a local LLM zero-shot tied within 0.03 macro-F1 on 2024-2026 (both model-comparison expectations failed), and the full case document did worse than FINRA's summary. A retrieval system over the FINRA Rulebook met all three of its tests: a charged rule in the top 5 for 71% of test cases, 20 of 20 out-of-scope questions declined, and an LLM judge at κ 0.74.
+
+[Write-up](blog/posts/finra-enforcement-nlp.md) · [Code on GitHub](https://github.com/RonCom/finra-enforcement-nlp)
+
 ## Group underwriting and stop-loss pricing
 
 Prices specific and aggregate stop-loss for synthetic employer groups of 50–2,500 lives from member-level Medicare

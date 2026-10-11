@@ -1,6 +1,5 @@
 ---
 date: 2026-10-11
-draft: true
 slug: finra-enforcement-nlp
 authors:
   - chris
@@ -8,12 +7,12 @@ categories:
   - Finance
   - NLP
   - Evaluation
-description: Predicting which FINRA rules a disciplinary case charged from its facts, with labels read from 6,000 case documents, three classifiers scored once on 2024-2026, and a test of whether the full case document beats FINRA's own summary. Every expectation was written down before the data was pulled; three of three failed.
+description: Predicting which FINRA rules a disciplinary case charged from its facts, with labels read from 6,000 case documents, three classifiers and a Rulebook retrieval system scored once on 2024-2026, and a test of whether the full case document beats FINRA's own summary. Six expectations written down before the data was pulled; the three classifier tests failed and the three retrieval tests passed.
 ---
 
-# Which FINRA rules did this conduct break? Classifiers tested against FINRA's own charges
+# Which FINRA rules did this conduct break? Classifiers and retrieval tested against FINRA's own charges
 
-FINRA, the regulator for U.S. broker-dealers, publishes a summary of every disciplinary action it takes each month. An enforcement or compliance team reading a complaint, a tip or an exam finding asks "**which rules does this conduct touch?**" I built classifiers that answer it from the facts of a case with the rule numbers removed, and tested them against the rules FINRA actually charged. The expectations were written down before any data was pulled, and the test years were scored once. All three classifier expectations failed, for one reason: FINRA's summaries name the conduct in the rules' own words.
+FINRA, the regulator for U.S. broker-dealers, publishes a summary of every disciplinary action it takes each month. An enforcement or compliance team reading a complaint, a tip or an exam finding asks "**which rules does this conduct touch?**" I built classifiers that answer it from the facts of a case with the rule numbers removed, and tested them against the rules FINRA actually charged. The expectations were written down before any data was pulled, and the test years were scored once. All three classifier expectations failed, for one reason: FINRA's summaries name the conduct in the rules' own words. The same fact helped the second half, a retrieval system over the FINRA Rulebook, which met all three of its expectations.
 
 <!-- more -->
 
@@ -23,6 +22,7 @@ FINRA, the regulator for U.S. broker-dealers, publishes a summary of every disci
     - **Models:** TF-IDF with logistic regression, ModernBERT-base fine-tuned (three seeds averaged), and a local LLM (gemma4 through Ollama) zero-shot.
     - **Result on 2024-2026 (1,143 cases):** macro-F1 **0.693 baseline, 0.694 fine-tuned, 0.664 zero-shot**. The fine-tuned model didn't beat the baseline by the 0.05 called for (H1 failed), and the zero-shot model came within 0.03 of it, not 0.10 behind (H2 failed).
     - **Full document vs. summary:** a second model reading each case's facts section scored **0.614 against the summary model's 0.681** on 300 test cases (H6 failed in the other direction).
+    - **Retrieval over the Rulebook:** keyword search (BM25) put a charged rule in the top 5 for **71.3%** of 950 test cases (H3, pass line 70%); the local model declined **20 of 20** out-of-scope questions (H4); an LLM judge agreed with checked labels at **κ 0.741** (H5, pass line 0.60).
     - **Stack:** Python, DuckDB, scikit-learn, PyTorch and Hugging Face Transformers, Ollama, PyMuPDF and Tesseract, pytest, uv. Code: [github.com/RonCom/finra-enforcement-nlp](https://github.com/RonCom/finra-enforcement-nlp).
 
 !!! warning "Settled charges aren't every rule the conduct broke"
@@ -36,12 +36,12 @@ The specification (`docs/spec.md` in the repo) fixes the sources, the labels, th
 | --- | --- | --- |
 | H1 | Fine-tuned transformer vs. TF-IDF baseline, test macro-F1 | Gain ≥ 0.05 |
 | H2 | Zero-shot local model vs. fine-tuned transformer | Zero-shot lower by ≥ 0.10 |
-| H3 | Retrieval over the FINRA Rulebook: a charged rule in the top 5 chunks | ≥ 70% |
+| H3 | Retrieval over the FINRA Rulebook: a charged rule in the top 5 results | ≥ 70% |
 | H4 | Out-of-scope questions declined | ≥ 18 of 20 |
 | H5 | LLM judge vs. hand labels, Cohen's κ | ≥ 0.60 |
 | H6 | Full case document vs. monthly summary as input | Gain ≥ 0.03 |
 
-Every rule changed after data was seen is in a dated change log at the bottom of the spec, with the reason. Test scoring runs only from code at a `freeze-*` git tag on a clean tree, and refuses to run twice. H3 to H5 cover a retrieval system over the FINRA Rulebook; they're built and waiting on the Rulebook download (below).
+Every rule changed after data was seen is in a dated change log at the bottom of the spec, with the reason. Test scoring runs only from code at a `freeze-*` git tag on a clean tree, and refuses to run twice. H3 to H5 cover the retrieval system over the FINRA Rulebook (below).
 
 ## Cases: 129 monthly reports
 
@@ -118,23 +118,41 @@ The facts model is 0.067 behind (95% interval -0.114 to -0.016; no bootstrap res
 
 This isn't a neutral comparison of documents. The facts input is what's left after removing everything that gives the label away, and those removals take some conduct with them. What it shows is that FINRA's summary carries at least as much usable signal as the stripped narrative it was written from.
 
-## Still to come: retrieval over the Rulebook
+## Retrieval over the Rulebook
 
-The second half of the project asks whether a retrieval system over the FINRA Rulebook retrieves and cites the rules FINRA charged, and declines questions the Rulebook doesn't answer. It reuses the design from my [Medicare policy RAG](policy-rag.md): rule pages split into chunks of about 250 words, BM25 and embedding search (nomic-embed-text) fused by reciprocal rank, and answers from the local model that cite each rule or decline.
+The second half asks whether a retrieval system over the FINRA Rulebook finds the rules FINRA charged, and whether a local model answering from it declines questions the Rulebook doesn't cover. It starts from the design of my [Medicare policy RAG](policy-rag.md): rule pages in chunks of about 250 words, BM25 keyword search and embedding search (nomic-embed-text through Ollama) fused by reciprocal rank, and a local model (gemma4) that cites rules from the top 5 or declines.
 
-The code and tests are done, and these were fixed before the Rulebook was downloaded:
+FINRA's terms of use restrict bulk copying and machine-learning use, with an exception for fair use. This is non-commercial research, the repo carries FINRA's copyright notice, and no FINRA text is redistributed beyond short excerpts. The download ran at one page every 15 seconds after finra.org answered 429 at a faster pace; 739 pages became an index of 657 rules (2,399 chunks): each page's tab labels and amendment history stripped, section headings with no text of their own and deleted rules left out.
 
-- **H3 scoring:** NASD rules count as their FINRA successors; Rule 2010 and procedural rules don't count.
-- **Correct answer:** at least one cited rule FINRA charged, and none unrelated to the conduct.
-- **Out-of-scope questions:** 20, reviewed by hand. One was dropped because FINRA Rule 2210 partly answers it.
+### What validation changed
 
-FINRA's terms of use restrict bulk copying and machine-learning use, with an exception for fair use; this is non-commercial research, the README carries FINRA's copyright notice, and no FINRA text is redistributed beyond short excerpts. The download runs at one page every three seconds and backs off when finra.org asks it to. This section will carry H3 to H5 when they're scored.
+The first validation run put a charged rule in the hybrid top 5 for 27% of cases and in the BM25 top 5 for 44%. Three changes, each logged in the spec before the test run, took them to 62% and 64%:
+
+1. **Drop the sanction sentence from the query.** Every summary opens with "censured and fined $50,000", which matched FINRA's rules about sanctions (8310, 8320, BrokerCheck disclosure) better than the rule broken. Keeping only the conduct, "the entry of findings that X", took hybrid from 0.27 to 0.51.
+2. **One chunk per rule.** Long rules filled several of the 5 slots; each rule now competes with its best chunk.
+3. **Search the conduct rules only.** All 491 charged rules in validation were conduct rules (0100-8000), while the Code of Procedure and the arbitration codes took 14% of the slots. Out-of-scope questions still search everything.
+
+Then H3's retriever was chosen: **BM25**, which beat hybrid and dense on every run. A larger embedding model (bge-m3) raised dense search a little and lowered hybrid. Summaries and rules share their key words, and fusing in a weaker ranking costs more than it adds.
+
+### Test results
+
+| ID | Result | Verdict |
+| --- | --- | --- |
+| H3 | 71.3% of 950 test cases have a charged rule in the BM25 top 5 (hybrid 67.2%, dense 46.3%) | Met |
+| H4 | 20 of 20 out-of-scope questions declined | Met |
+| H5 | Judge vs. checked labels: κ 0.741, agreement 87% | Met |
+
+**H3** cleared its line by 1.3 points, and validation was 64%, so the margin is thin. It works best where a series has its own vocabulary (trade reporting 0.91, offerings 0.90, supervision 0.80) and worst on registration (0.52) and books and records (0.54), whose rule titles ("General Requirements") say little.
+
+**H4** comes with a caveat. The same model declined 43 of the 100 in-scope test cases it was asked about. It declines whenever no excerpt covers every part of the conduct, and three prompt versions on validation didn't change that. So the decline works when it should; the system also gives up on cases it could answer. Of the 57 answers it gave, 51 cited a charged rule and nothing unrelated.
+
+**H5** measures whether the local model can grade its own answers. The judge agreed with the checked labels on 87 of 100 answers, and every disagreement went the same way: 13 answers the labels called correct, the judge called incorrect, so the judge is stricter (38% correct against 51%). The labels were drafted by an AI assistant model, blind to the judge, with a written reason per row; I reviewed every row against the case summary and changed none. H5 is agreement with labels a person confirmed, not labels a person wrote from scratch.
 
 ## Engineering
 
 - **One DuckDB file per job,** so the facts extraction, the Rulebook download and the index build run side by side.
-- **A polite HTTP client** with an on-disk cache, a declared User-Agent, and backoff that doubles the gap between requests on each 429.
-- **Resumable LLM runs:** every zero-shot answer is stored with its prompt version and model, so an interrupted run picks up where it stopped and a prompt change is a new version, not an overwrite.
+- **A polite HTTP client** with an on-disk cache, a declared User-Agent, and backoff on each 429; the Rulebook crawl pauses 5 minutes when refused and resumes from its cache.
+- **Resumable LLM runs:** every zero-shot answer, retrieval answer and judge label is stored with its prompt version and model, so an interrupted run picks up where it stopped and a prompt change is a new version, not an overwrite.
 - **Tests on every push** (GitHub Actions), including the masking check and the facts-filter cases found in each extraction round.
 
 ## Limits
@@ -144,5 +162,7 @@ FINRA's terms of use restrict bulk copying and machine-learning use, with an exc
 - **Rare series:** "other" (12 test cases, merged rare series) scores 0 for both trained models, which costs them about 0.05 of all-series macro-F1.
 - **Validation to test drift:** both trained models lost 0.07-0.08 from 2023 to 2024-2026; the test years bring series that were rare in training (FINRA 5000 has 48 test cases against 8 in validation). The zero-shot model, with no training labels, held steady (0.667 to 0.664).
 - **One zero-shot model and prompt,** series descriptions written by hand.
+- **One local model answers and judges** its own answers; H5 checks how far that can be trusted, against labels drafted by a second model and confirmed by a person.
+- **Today's Rulebook:** rules amended since a case was charged may retrieve correctly but read differently than they did then.
 
 The code, spec with change log, and full results are at [github.com/RonCom/finra-enforcement-nlp](https://github.com/RonCom/finra-enforcement-nlp).
