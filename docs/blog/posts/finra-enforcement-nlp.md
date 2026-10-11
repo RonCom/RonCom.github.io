@@ -85,7 +85,7 @@ The two trained models tie overall and split by series. The fine-tuned model lea
 
 The zero-shot model is close wherever a series has its own vocabulary: 8210 cooperation 0.959, MSRB 0.905, trade reporting 0.905. It loses where the label depends on FINRA's charging habits. It predicts registration (FINRA 1000) for 143 test cases against 56 true ones, because any mention of a Form U4 reads as a registration violation. And it splits statutes from their rules differently from FINRA's drafting.
 
-**Why H1 and H2 failed.** Monthly summaries are short and name the conduct in the rules' own words: "failed to supervise", "outside business activity", "refused to appear for on-the-record testimony". With rule numbers masked, those phrases carry most of the signal, and word pairs capture them as well as a fine-tuned encoder does. A model with no labeled data, told only what each series covers, came within 0.03.
+**Why H1 and H2 failed.** Monthly summaries are short and name the conduct in the rules' own words: "failed to supervise", "outside business activity", "refused to appear for on-the-record testimony". With rule numbers masked, those phrases carry most of the signal, and word pairs capture them as well as a fine-tuned encoder does. A model with no labeled data, told only what each series covers, came within 0.03. Rule titles, which the masking kept, explain little of it: only 8.9% of test summaries contain a charged rule's title word for word. A few titles nearly name the charge ("customer confirmations" in 71% of the cases charged under it, against 0.1% of the rest), but most never appear; the summaries paraphrase the rules.
 
 ### Calibration
 
