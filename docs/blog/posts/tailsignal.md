@@ -194,7 +194,7 @@ those volumes set the partner-recruitment plan.
 - **Stack:** Python with uv, dbt on DuckDB locally and on Snowflake, Splink for matching, scikit-learn,
   statsmodels and statsforecast for models, FastAPI for a metered data API and partner portal.
 - **Data products:** versioned releases with content hashes and diffs, stored in DuckLake (Parquet fallback).
-- **Tests:** 28 dbt tests for data quality and privacy; 26 unit tests run on every push with GitHub Actions.
+- **Tests:** 28 dbt tests for data quality and privacy; 41 unit tests run on every push with GitHub Actions.
 - **Specifications:** every analysis has a pre-registered spec in `docs/`, written before its code ran, and a results
   file that scores each expectation.
 

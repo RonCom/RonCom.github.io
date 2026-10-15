@@ -131,7 +131,7 @@ clinic's scorecard beside the network median. Interactive docs at `/docs`.
 | What | Count |
 |---|---|
 | dbt data and privacy tests | 28 |
-| Python unit tests (run on every push by GitHub Actions) | 29 |
+| Python unit tests (run on every push by GitHub Actions) | 41 |
 | Pre-registered specifications, each written before its code ran | One per analysis, in `docs/` |
 | Fixed random seeds | Generator, simulations, bootstraps |
 
