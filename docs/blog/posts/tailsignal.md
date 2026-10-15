@@ -191,12 +191,31 @@ those volumes set the partner-recruitment plan.
 
 ## Engineering
 
-- **Stack:** Python with uv, DuckDB and dbt (a Snowflake target is configured), Splink for matching, scikit-learn,
+- **Stack:** Python with uv, dbt on DuckDB locally and on Snowflake, Splink for matching, scikit-learn,
   statsmodels and statsforecast for models, FastAPI for a metered data API and partner portal.
 - **Data products:** versioned releases with content hashes and diffs, stored in DuckLake (Parquet fallback).
 - **Tests:** 28 dbt tests for data quality and privacy; 26 unit tests run on every push with GitHub Actions.
 - **Specifications:** every analysis has a pre-registered spec in `docs/`, written before its code ran, and a results
   file that scores each expectation.
+
+### Snowflake
+
+One set of dbt models builds on both DuckDB and Snowflake; the dialect differences sit in one macro file. Entity
+resolution stays in Python, and its cluster table is copied up to Snowflake.
+
+**Reconciliation.** All 22 models have the same row counts in both engines, and a row-by-row comparison of the core and
+product tables matches. Two differences remain, both known: Snowflake reports the breed-match score in whole
+percentages, and two benchmark rows differ by half a cent of rounding.
+
+**Incremental load.** Daycare visits, the largest feed, also load incrementally. A root task runs `COPY INTO` on new
+daily Parquet files, an append-only stream on the raw table picks up the new rows, and a child task appends them to
+`CORE.FCT_SERVICE_EVENT` only when the stream has data. To test it, I removed the last 30 days of visits (10,685 rows)
+and replayed them as 22 daily files. All 10,685 loaded, the appended rows matched DuckDB with zero differences, and a
+second run with no new files skipped the child task.
+
+**Masking.** Four masking policies cover 33 owner columns in seven staging and intermediate relations; the core and
+product tables hold no owner fields. The pipeline role sees clear values. The `TAILSIGNAL_ANALYST` role sees `***` for
+names and partial email, phone and ZIP, and its query on the RAW schema is refused.
 
 ## Limits
 
