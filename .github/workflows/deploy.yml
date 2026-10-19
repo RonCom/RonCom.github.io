@@ -3,6 +3,7 @@ name: deploy
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -11,25 +12,26 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install "mkdocs-material>=9.5,<10" "mkdocs<2"
-      - run: mkdocs build --strict
+          fetch-depth: 0  # full history for the RSS plugin's git dates
+      - uses: astral-sh/setup-uv@v6
+      # Install exactly what uv.lock pins, so CI builds with the same versions as a local build.
+      - run: uv sync --locked
+      - run: uv run mkdocs build --strict
       - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
         with:
           path: site
   deploy:
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     environment:
