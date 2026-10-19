@@ -34,6 +34,12 @@ plugins:
       post_date_format: long
       post_url_format: "{slug}"
       archive: false
+  - rss:
+      match_path: "blog/posts/.*"
+      date_from_meta:
+        as_creation: date
+      categories:
+        - categories
 
 markdown_extensions:
   - admonition
@@ -56,6 +62,9 @@ extra:
       link: https://github.com/RonCom
     - icon: fontawesome/brands/linkedin
       link: https://www.linkedin.com/in/lavellechristopher
+    - icon: fontawesome/solid/rss
+      link: https://roncom.github.io/feed_rss_created.xml
+      name: RSS feed
 
 nav:
   - Home: index.md
