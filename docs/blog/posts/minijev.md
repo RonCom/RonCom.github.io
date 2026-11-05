@@ -49,7 +49,7 @@ same scale as Jev's.
 
 The untrained model already produces Jev-shaped output this way. Training is for accuracy and calibration.
 
-## Design choice 2: reward honest probabilities, exactly
+## Design choice 2: reward calibrated probabilities, exactly
 
 The loss is a proper scoring rule: log score plus Brier score, plus ranked probability score for rubric questions. A
 proper scoring rule is maximized only when the stated probability equals the real chance of being right, so it pays

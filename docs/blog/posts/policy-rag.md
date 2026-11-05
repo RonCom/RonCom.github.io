@@ -1,5 +1,7 @@
 ---
-date: 2026-10-01
+date:
+  created: 2026-10-01
+  updated: 2026-11-04
 slug: policy-rag
 authors:
   - chris
@@ -20,14 +22,21 @@ itself.
 
 <!-- more -->
 
+!!! note "Updated November 4, 2026"
+    A rerun added a cross-encoder reranker (tested twice, kept out), per-answer latency, token and cost tracing,
+    and a change to how answers are scored. The judge had been passing every decline on a question the manuals do
+    answer, which put the model without documents at 53%. Scored with that rule in code, it gets 1%, and agreement
+    with my hand labels rose from κ 0.68 to 0.91. The numbers below are from the rerun.
+
 !!! abstract "TL;DR"
     - **Corpus:** four CMS manuals (NCCI Policy Manual chapters 1 and 11, Medicare Benefit Policy Manual chapter 15, Claims Processing Manual chapter 5), split into 851 section-aware chunks.
-    - **Stack:** Ollama (`nomic-embed-text`, `gemma4:e4b`, `gemma4:26b` as judge), DuckDB, BM25 + embeddings fused with reciprocal rank fusion, MLflow. Everything runs on a laptop with an 8 GB GPU.
-    - **Answers:** 84% judged correct with retrieval vs 50% for the same model without documents; 12 of 12 out-of-scope questions declined.
+    - **Stack:** Ollama (`nomic-embed-text`, `gemma4:e4b`, `gemma4:26b` as judge), DuckDB, BM25 + embeddings fused with reciprocal rank fusion, a cross-encoder reranker under test, MLflow. Everything runs on a laptop with an 8 GB GPU.
+    - **Answers:** 80% correct with retrieval vs 1% for the same model without documents, scored by the judge plus a code rule that fails a decline on a question the manuals answer; 12 of 12 out-of-scope questions declined.
     - **Retrieval:** keyword search found the right section for 100% of questions written in the manuals' wording but only 40% of plain-language ones; embeddings reached 70% on those.
-    - **Weak spot:** plain-language questions score 45% correct vs 92-93% for the rest, and there retrieval does no better than the model alone. That sets what to tune and what to monitor.
-    - **Judge:** calibrated against 37 hand labels; correctness agreement 92%, Cohen's κ 0.68.
-    - **MLOps:** MLflow traces every answer and runs a chunking sweep with a rule fixed in advance; Evidently watches label-free retrieval signals for drift and feeds a review queue.
+    - **Weak spot:** plain-language questions score 40% correct vs 91% on the manuals' wording and 88% paraphrased. That sets what to tune and what to monitor.
+    - **Reranking:** a cross-encoder added 2 points at top 5, inside its interval, and no gain on answers; both tests had their rules written first, and hybrid stays.
+    - **Judge:** checked against 37 hand labels: κ 0.68 for the judge alone, 0.91 with the decline rule in code.
+    - **MLOps:** MLflow traces every answer with latency, tokens and cost (p95 13.2 s); a chunking sweep runs with a rule fixed in advance; Evidently watches label-free retrieval signals for drift and feeds a review queue.
     - **Code:** [github.com/RonCom/policy-rag](https://github.com/RonCom/policy-rag).
 
 ## Why this problem
@@ -100,6 +109,7 @@ A hit means a chunk from the gold section is among the top results.
 | Keyword (BM25) | 76% | 88% | 100% | 40% |
 | Embeddings | 70% | 90% | 95% | **70%** |
 | **Hybrid** | **76%** | **92%** | 100% | 60% |
+| Rerank (cross-encoder over hybrid's top 20) | 72% | 94% | 100% | 70% |
 
 The plain-language questions changed the picture. Keyword search, perfect on manual wording, found the right
 section for only 4 of 10 everyday questions; embeddings found 7. Hybrid keeps keyword search's precision on exact
@@ -108,20 +118,34 @@ ranking among methods is suggestive, not settled.
 
 ![Recall at 5 by question wording and retriever](../../assets/policy-rag/retrieval_by_style.png)
 
-**What this changes.** Hybrid stays the default; dense leads on plain language by one question in ten, which is
-not evidence. Everyday wording is the failure mode, so it is what monitoring watches (below) and where the test
-set needs more questions.
+Keyword search and embeddings each score the question and a chunk separately. A cross-encoder reads the two
+together, which is the check plain-language misses call for, but it's too slow to run over 851 chunks, so it
+re-scores hybrid's top 20. It found one more question in the top 5 (94% vs. 92%, 95% interval −4 to +8 points)
+and moved two correct sections out of first place. My rule, written before the run, switched only if the interval
+cleared zero, so hybrid stayed.
+
+Recall isn't answer quality, so rerank got a second test on answers, again with the rule written first: switch only
+if correctness on the 50 answerable questions rises with an interval above zero and false declines don't. Both
+scored 84% on the judge's grades (interval −9 to +9 points). Rerank changed the grade on 11 questions, six better
+and five worse: it fixed a question about billing a 5-minute service and declined two that hybrid answered. Hybrid
+stays the answer retriever.
+
+**What this changes.** Hybrid stays the default; dense and rerank lead on plain language by one question in ten,
+which is not evidence. Everyday wording is the failure mode, so it is what monitoring watches (below) and where
+the test set needs more questions.
 
 ## Results: answers
 
 | | With retrieval | Same model, no documents |
 |---|---|---|
-| Judged correct (answerable questions) | **84%** | 50% |
+| Correct, answerable questions (judge + decline rule) | **80%** | 1% |
+| Judge alone, answerable questions | 84% | 53% |
 | Declined the 12 out-of-scope questions | **12 / 12** | 9 / 12 |
-| Declined an answerable question | 3 / 50 | – |
+| Declined an answerable question | 3 / 50 (one in prose) | – |
 | Cited a gold section when answering | 89% | – |
 
-Retrieval raises correctness from 50% to 84%, and every claim is tied to a section. Without the documents, the model
+Retrieval raises correctness from 1% to 80%, and every claim is tied to a section. The judge alone put the model
+without documents at 53%, and the gap is the subject of the judge section below. Without the documents, the model
 answered three out-of-scope questions (Part D penalties, Medicare Advantage risk adjustment, ACO benchmarks) from
 general knowledge. Those answers were broadly reasonable, but nothing in them could be checked against a source, which
 is the property a reviewer needs.
@@ -130,12 +154,14 @@ Breaking the results down by how a question is worded tells a sharper story than
 
 ![Answer grades split by whether retrieval found the gold section](../../assets/policy-rag/answer_outcomes.png)
 
-Eleven of the 50 answerable questions fall short of fully correct. Four are retrieval misses, all on plain-language
-questions, and all four answers were wrong. Asked whether Medicare stops paying once a patient stops improving, the
-system retrieved a section on notifying beneficiaries instead of §220.2's rule on maintenance therapy, and answered
-"yes"; the manual's answer is "not necessarily." The other seven had the right section and still fell short, mostly
-by leaving out a secondary fact such as the 14-day signature rule for verbal certifications. Plain-language
-questions score 45%; the other 40 score 92-93%.
+Fourteen of the 50 answerable questions fall short of fully correct. Four are retrieval misses, all on
+plain-language questions, and all four ended wrong: two declines, one of them written as prose instead of the exact
+reply, and two answers from the wrong section. Asked whether Medicare stops paying once a patient stops improving,
+the system retrieved a section on notifying beneficiaries instead of §220.2's rule on maintenance therapy, and
+answered "yes"; the manual's answer is "not necessarily." The other ten had the right section and still fell
+short: eight left out a secondary fact (the 14-day signature rule for verbal orders, the 30-day cancellation
+notice, the 53-minute threshold for a fourth unit), one declined, and one said 15 minutes where the rule is 8.
+Plain-language questions score 40%; manual wording 91% and paraphrased 88%.
 
 **What this changes.** A miss became a wrong answer every time, so retrieval is the first thing to tune. But more
 points are lost with the right section in hand, so the answer step is next. My working hypothesis is that the
@@ -144,10 +170,11 @@ by prompt hash.
 
 ![With and without the manuals, by question wording, and on out-of-scope questions](../../assets/policy-rag/rag_vs_closed_book.png)
 
-Retrieval lifts manual-wording questions from 63% to 93% and paraphrased ones from 15% to 92%, and keeps every
-out-of-scope question declined. On plain-language questions the gain disappears: 50% with the manuals, 60%
-without. Ten questions is too few to call that a loss, but it is the worse failure: a wrong answer from the wrong
-section arrives *with a citation*, which looks more trustworthy than an unsourced guess.
+Retrieval lifts manual-wording questions from 0% to 91%, paraphrased ones from 0% to 88% and plain-language ones
+from 5% to 40%, and keeps every out-of-scope question declined. Without the manuals, the model declined 26 of the 50
+answerable questions and got 23 of its 24 answers wrong. Plain language is where retrieval is weakest, and its
+failure there is the worse kind: a wrong answer from the wrong section arrives *with a citation*, which looks more
+trustworthy than an unsourced guess.
 
 **What this changes.** Everyday questions need better retrieval before their answers can be trusted. A guard to
 test later: when the monitoring signals say retrieval is unsure, decline or flag instead of answering.
@@ -158,24 +185,31 @@ Correctness and faithfulness were graded by a larger local model (`gemma4:26b`) 
 is only useful if it agrees with a person, so I labeled 37 answers by hand, choosing a mix of errors, partial answers
 and declines, and compared:
 
-| | Agreement | Cohen's κ | Judge pass rate | My pass rate |
-|---|---|---|---|---|
-| Correctness | 92% (34 / 37) | **0.68** | 86% | 84% |
-| Faithfulness | 97% (36 / 37) | – | 97% | 100% |
+| Correctness | Labels | Agreement | Cohen's κ | Scored pass rate | My pass rate |
+|---|---|---|---|---|---|
+| Judge alone, first run | 37 | 92% (34 / 37) | 0.68 | 86% | 84% |
+| Judge + decline rule, first run | 37 | 97% (36 / 37) | **0.91** | 81% | 84% |
+| Judge alone, rerun | 20 | 95% (19 / 20) | 0.77 | 90% | 85% |
+| Judge + decline rule, rerun | 20 | 100% (20 / 20) | 1.00 | 85% | 85% |
 
-Correctness agreement is substantial (κ above 0.6), so the 84% figure stands. For faithfulness, every answer I
-labeled was faithful, so κ has no variation to measure and agreement is the meaningful number.
+The disagreements showed a pattern. The judge passed "NOT IN DOCUMENTS" replies whenever the excerpts it was shown
+lacked the answer, even when the manuals contain it. It grades against what was retrieved, so a retrieval miss looks
+like a correct decline. In the rerun, without documents, the model declined 26 of 50 answerable questions and the
+judge passed all 26. Of the 24 answers it gave, the judge failed 23 and gave one partial credit, so 52 of its 53
+points were credit for declines.
 
-The disagreements showed a pattern. The judge accepted two "NOT IN DOCUMENTS" replies because the excerpts it was
-shown lacked the answer, even though the manuals contain it. It grades against what was retrieved, so a retrieval miss
-can look like a correct decline. A deterministic check (did retrieval return the gold section?) catches those cases,
-which is a good reason not to rely on the judge alone.
+Whether a question is answerable is fixed by the test set, so that rule doesn't need a judge. A decline on an
+answerable question now scores 0 in code, whether it's the exact reply or written as prose ("the excerpts do not
+provide a specific answer"), and an exact decline counts as faithful, which the judge's rubric already said and the
+judge once ignored. With the rule, agreement with my labels went from κ 0.68 to 0.91. The rerun's κ 1.00 is on 20
+labels, the ones whose answers came out word for word the same, so it's a small sample.
 
-![LLM judge vs human grades on 37 answers](../../assets/policy-rag/judge_calibration.png)
+![LLM judge vs human grades on the labeled answers that match the rerun](../../assets/policy-rag/judge_calibration.png)
 
-**What this changes.** The judge grades correctness at scale, but every decline is also checked against whether
-retrieval found the gold section. The calibration holds for one judge model and one judge prompt; changing either
-means labeling a fresh sample.
+**What this changes.** The judge grades what code can't: correctness of an answer against the reference's key facts.
+Rules the test set decides exactly run in code after it, and both grades are kept, so every comparison shows the
+judge alone and the judge with the rules. The calibration holds for one judge model and one judge prompt; changing
+either means labeling a fresh sample.
 
 Defining the labels mattered too. On my first pass I scored two wrong answers as "unfaithful" because they were
 wrong, but they accurately quoted the (wrong) sections they were given. Faithful means supported by the excerpts, not
@@ -218,7 +252,7 @@ search. It gets the same treatment: an ablation on plain-language questions, onc
 
 An evaluation is a snapshot. Two questions remain once the system is in use: which configuration is running and
 why, and whether it still works on the questions people actually ask. I used MLflow for the first and Evidently for
-the second, and the design choices were mostly about keeping both honest at this scale.
+the second, and the design choices were mostly about keeping both trustworthy at this scale.
 
 **Every answer is a trace.** Each question is logged as an MLflow trace with three spans: `rag`, `retrieve` (the
 five excerpts with section, page, rank and score) and `generate` (prompt version and reply). Three kinds of scores
@@ -227,8 +261,19 @@ grade with its reason, and my hand label. When the judge and I disagree, I open 
 was shown; that is where the judge's leniency on declines after a retrieval miss becomes obvious.
 
 **Runs carry their lineage.** Each eval run logs the models and chunking settings, plus hashes of the question file
-and both prompts, and the git commit. The question set grew from 52 to 62 during this project; without the hash,
-two accuracy numbers from different question sets look comparable when they aren't.
+and both prompts, the git commit, the Ollama version and each model's digest. The question set grew from 52 to 62
+during this project; without the hash, two accuracy numbers from different question sets look comparable when they
+aren't. The version and digests came later, for a reason: a rerun with the same prompt hashes, still at
+temperature 0, changed 35 of 62 answers. The closed-book answers changed too, and they involve no retrieval, which
+points at the model or the server; the first run logged neither, so the cause can't be pinned down. Hand labels and
+judge grades only count against the exact answer they graded, so a script copies grades to answers whose text came
+out identical and sends only the changed ones back to the judge.
+
+**Every answer carries its cost.** The trace records latency per step, tokens in and out, Ollama's own timings
+(model load, prompt processing, generation) and dollars from a price table, which is empty for local models and
+gets a row for any hosted one. On the rerun: p50 10.3 s, p95 13.2 s, with generation 11.1 s of the p95 and
+retrieval 2.1 s. That points the first latency fix at the answer model. A change to the prompt, top-k or reranker
+moves accuracy and cost together, and each run reports both.
 
 **The chunk size gets tested, not defended.** I had picked 300-word chunks by judgment. `policy-rag sweep` tries
 five chunkings with all three retrievers as nested MLflow runs. It sweeps retrieval only, because retrieval is
@@ -315,12 +360,15 @@ looked confident to retrieval and weren't flagged. Those depend on the answer st
 - **Everything is logged to MLflow:** settings, lineage hashes, metrics, traces and reports, in a local SQLite
   store. There is no tracking server or model registry: it is one person on one laptop, and nothing here is trained.
 - **A `--fake` mode** (hash embeddings and canned replies) runs the full pipeline and tests without a model server.
+- **Grades are reused when answers repeat:** `scripts/reuse_judge.py` copies judge grades to answers identical to a
+  graded run and judges only the rest. On the rerun that saved 27 of 62 answer grades and 34 of 62 closed-book ones.
 
 ## Limits
 
 - **Four chapters, not the full manuals.** A production version would index all relevant chapters, local coverage
   determinations and articles, and refresh them when CMS revises a manual.
-- **62 questions is small,** and only 10 are in plain language. Differences between search methods have wide intervals.
+- **62 questions is small,** and only 10 are in plain language. Differences between search methods have wide
+  intervals: one question is two points, and the rerank answer test's interval spanned −9 to +9.
 - **I drafted the questions with an AI assistant** and checked each against its source. A reviewer-written test set
   would be a stronger benchmark.
 - **The answers quote policy;** they are not billing or legal advice.
