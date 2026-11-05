@@ -19,7 +19,7 @@ A care-management team has a budget, a fixed number of nurse and pharmacist hour
 !!! abstract "TL;DR"
     - **Predict:** a deep learning model (a GRU over 24 months of utilization plus an MLP) reached **AUC 0.713**, ahead of gradient boosting (0.704; +0.009, 95% CI +0.002 to +0.016) and logistic regression (0.680).
     - **Prescribe:** uplift models trained on a randomized pilot, plus an integer program over five programs under budget, staff-hour and capacity limits, averted **74% more** expected acute events than nurse calls to the highest-risk members.
-    - **The honest limit:** with true program effects, the same optimizer does much better. **Estimating effects from a one-year pilot, not optimizing, is the bottleneck.**
+    - **The limit:** with true program effects, the same optimizer does much better. **Estimating effects from a one-year pilot, not optimizing, is the bottleneck.**
     - **Keep learning:** a contextual bandit (Thompson sampling) beat a frozen recommender by 34–53% across five seeds. Evidently drift monitoring and MLflow champion/challenger retraining caught a claims-feed change a year before labels arrived.
     - **Steer:** a capacity-constrained linear program sends members who need physical therapy to lower-cost real North Carolina providers. It nearly doubles savings over "recommend the cheapest nearby".
 
@@ -140,7 +140,7 @@ Optimizing the assignment nearly doubles savings, because the cheapest provider 
 - **Optimization pays most when the inputs are good.** Across outreach, audits and steering, the step from "rank and go down the list" to "optimize under constraints" gave the largest gains.
 - **Estimating effects is the hard part.** When the optimizer lost to a simple rule, the cause was noisy effect estimates, and the true-effects ceiling showed exactly how much was left.
 - **Learning online helps in proportion to how wrong you started.** Small gains when the starting model was close; larger when a program or a feed changed; none without forgetting old evidence.
-- **Write the selection rule before looking.** Choosing learners on pilot data only, and tuning exploration on the first year only, kept the comparisons honest. Where I changed something after seeing results, the write-up says so.
+- **Write the selection rule before looking.** Choosing learners on pilot data only, and tuning exploration on the first year only, kept later data out of those choices. Where I changed something after seeing results, the write-up says so.
 
 ## Engineering
 
